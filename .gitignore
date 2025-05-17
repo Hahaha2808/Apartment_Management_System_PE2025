@@ -44,3 +44,4 @@ backend/dist/
 backend/__pycache__/
 backend/venv/
 backend/*.pyc
+backend/uploads/
