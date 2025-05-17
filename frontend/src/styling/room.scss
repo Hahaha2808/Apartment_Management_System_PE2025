@@ -1,50 +1,46 @@
 .room-layout {
   height: 100vh;
-  width: 100vw;
+  width: 100%;
   position: relative;
   display: flex;
   background-color: #e5e5e5;
-  //max-width: none;
+  max-width: none;
 
   .room-content {
-    flex: 1;
     width: 100%;
     height: 100%;
-    padding: 20px; /* đều cả 4 phía */
+    padding-top: 20px;
+    padding-left: 15px;
+    padding-right: 15px;
     display: flex;
     column-gap: 15px;
     row-gap: 15px;
-    box-sizing: border-box;
   }
 }
 .room-wrapper {
   background-color: rgb(255, 255, 255);
   border-radius: 0px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  padding: 20px 20px 20px 30px;
-  //max-width: 100%;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  padding-top: 20px;
+  padding-bottom: 20px;
+  padding-left: 30px;
+  padding-right: 20px;
+  //margin: 0 auto;
+  //width: 100%;
+  //height: 100%;
 }
 .room-container {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
+  gap: 30px;
   padding: 20px;
   background-color: #f0f0f0;
-  max-width: 100%;
-  min-width: 100%;
   //border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
   margin: 0 auto; /* căn giữa */
   margin-top: 30px;
   //justify-content: flex-start;
-  box-sizing: border-box;
-  overflow-y: auto;
-  //flex: 1;
 }
 
 .room-title {
