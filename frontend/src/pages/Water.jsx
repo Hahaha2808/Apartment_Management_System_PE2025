@@ -12,18 +12,18 @@ function Water() {
   const [data, setData] = useState([]);
   const navigate = useNavigate();
 
-  // useEffect(() => {
-  //   const user = JSON.parse(localStorage.getItem("user"));
-  //   const token = localStorage.getItem("authToken");
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem("user"));
+    const token = localStorage.getItem("authToken");
 
-  //   if (!user || user.role !== "landlord" || !token) {
-  //     alert("Access denied. Only landlord can access this page.");
-  //     navigate("/login");
-  //     return;
-  //   }
+    if (!user || user.role !== "landlord" || !token) {
+      alert("Access denied. Only landlord can access this page.");
+      navigate("/login");
+      return;
+    }
 
-  //   fetchCurrentMonthData();
-  // }, []);
+    fetchCurrentMonthData();
+  }, []);
 
   const handleInputChange = (index, value) => {
     const newData = [...data];
@@ -56,7 +56,7 @@ function Water() {
       );
 
       alert("💾 Saved successfully!");
-      // 👉 Load lại data từ backend để đảm bảo old = tháng trước
+
       fetchCurrentMonthData();
     } catch (err) {
       console.error("❌ Failed to save water reading", err);
@@ -140,7 +140,8 @@ function Water() {
           <div className="water-upper">
             <h1 className="service-title">Water Meter</h1>
             <button className="search-btn" onClick={handleFilter}>
-              <FaSearch className="icon"></FaSearch>View</button>
+              <FaSearch className="icon"></FaSearch>View
+            </button>
           </div>
           <div className="break"></div>
           <div className="water-lower">
