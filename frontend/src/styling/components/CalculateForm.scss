@@ -1,0 +1,110 @@
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background-color: #fff;
+  border-radius: 10px;
+  width: 400px;
+  padding: 30px 40px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+
+  h2 {
+    margin: 0;
+    font-size: 30px;
+    font-weight: bold;
+    color: #47546d;
+    text-align: center;
+  }
+}
+
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  //padding: 6px 10px 10px;
+
+  .field-group {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    margin-bottom: 6px;
+
+    label {
+      width: 100px; // Cố định chiều rộng để các label thẳng hàng
+      font-weight: 600;
+      text-align: left;
+      font-size: 14px;
+      color: #1b395a;
+      white-space: nowrap;
+    }
+
+    .date-input,
+    select {
+      padding: 6px 10px;
+      border-radius: 4px;
+      border: 1px solid #d3d3d3;
+      font-size: 14px;
+      background: white;
+      color: #47546d;
+      min-width: 150px;
+      width: 200px;
+    }
+  }
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 5px;
+
+  .btn {
+    padding: 6px 10px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s ease;
+  }
+
+  .confirm {
+    background-color: #efbe2d;
+    color: white;
+
+    &:hover {
+      background-color: #e0ac1c;
+    }
+  }
+
+  .cancel {
+    background-color: #d1d5db;
+    color: #333;
+
+    &:hover {
+      background-color: #bfc3c8;
+    }
+  }
+}

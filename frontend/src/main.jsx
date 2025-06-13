@@ -16,7 +16,7 @@ import Electric from "./pages/Electric.jsx";
 import Water from "./pages/Water.jsx";
 import Welcome from "./pages/Welcome.jsx";
 import Customer from "./pages/Customer.jsx";
-
+import Payment from "./pages/Payment.jsx";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -58,6 +58,10 @@ const router = createBrowserRouter([
   {
     path: "/customer",
     element: <Customer />,
+  },
+  {
+    path: "/payment",
+    element: <Payment />,
   },
 ]);
 
