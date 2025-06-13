@@ -11,10 +11,10 @@
 */
 
 .edit-room-title {
-  font-size: 40px;
+  font-size: 32px;
   font-weight: bold;
   color: #4d5b76;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   margin-top: 5px;
   text-align: center;
 }
@@ -32,19 +32,20 @@
   color: #4d5b76;
   margin-bottom: 6px;
   margin-top: 0px;
-  font-size: 18px;
+  font-size: 14px;
 }
 
 .edit-room-container input,
 .edit-room-container select,
 .edit-room-container textarea {
   width: 100%;
-  padding: 10px;
+  padding: 6px;
   font-size: 15px;
   border: 1px solid #ccc;
   border-radius: 6px;
   outline: none;
   transition: 0.3s;
+  margin-bottom: 0px;
 }
 
 .edit-room-container input:focus,
@@ -59,7 +60,7 @@
 
 .edit-room-container .form-group {
   width: 90%;
-  margin-bottom: 30px;
+  margin-bottom: 10px;
   margin-left: 20px;
   margin-right: 20px;
 }
@@ -72,7 +73,7 @@
 }
 
 .edit-room-wrapper .btn {
-  padding: 10px 16px;
+  padding: 6px 10px;
   color: #fff;
   font-weight: bold;
   border: none;
@@ -80,7 +81,7 @@
   cursor: pointer;
   transition: 0.2s;
   background-color: #123254;
-  font-size: 16px;
+  font-size: 14px;
   margin-right: 20px;
 }
 

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import SidePanel from "../components/SidePanel";
 import "../styling/water.scss";
-import { FaSearch } from "react-icons/fa";
 import "react-datepicker/dist/react-datepicker.css";
 import DateField from "../components/DateField";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { FaSave, FaSearch } from "react-icons/fa";
 
 function Water() {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -139,9 +139,6 @@ function Water() {
         <div className="water-inner">
           <div className="water-upper">
             <h1 className="service-title">Water Meter</h1>
-            <button className="search-btn" onClick={handleFilter}>
-              <FaSearch className="icon"></FaSearch>View
-            </button>
           </div>
           <div className="break"></div>
           <div className="water-lower">
@@ -150,72 +147,66 @@ function Water() {
                 selectedDate={selectedDate}
                 setSelectedDate={setSelectedDate}
               />
+              <button className="search-btn" onClick={handleFilter}>
+                <FaSearch className="icon"></FaSearch>View
+              </button>
             </div>
-            <table
-              style={{
-                width: "100%",
-                marginTop: "20px",
-                borderCollapse: "collapse",
-              }}
-            >
-              <thead>
-                <tr>
-                  <th>Room</th>
-                  <th>Renter</th>
-                  <th>Previous Water Rate</th>
-                  <th>Current Water Rate</th>
-                  <th>Consumed</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map((entry, index) => {
-                  const usage = entry.new - entry.old;
-                  return (
-                    <tr key={index}>
-                      <td className="room">{entry.room}</td>
-                      <td className="user">{entry.user}</td>
-                      <td className="old-usage">
-                        <input
-                          type="number"
-                          value={entry.old}
-                          disabled
-                          style={{ width: "60px" }}
-                        />
-                      </td>
-                      <td className="new-usage">
-                        <input
-                          type="number"
-                          value={entry.new}
-                          onChange={(e) =>
-                            handleInputChange(index, e.target.value)
-                          }
-                          disabled={!isCurrentMonth}
-                          style={{ width: "60px" }}
-                        />
-                      </td>
-                      <td className="final-usage">
-                        {entry.consumed?.toFixed(1) || 0}
-                      </td>
-                      <td>
-                        <button
-                          onClick={() => handleSave(index)}
-                          style={{
-                            backgroundColor: "#4FC3F7",
-                            color: "white",
-                            border: "none",
-                            padding: "5px 10px",
-                            borderRadius: "5px",
-                          }}
-                        >
-                          💾 Save
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="table-wrapper">
+              <table className="payment-table">
+                <thead>
+                  <tr>
+                    <th>Room</th>
+                    <th>Renter</th>
+                    <th>Previous Water Rate</th>
+                    <th>Current Water Rate</th>
+                    <th>Consumed</th>
+                    <th>Save</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.map((entry, index) => {
+                    const usage = entry.new - entry.old;
+                    return (
+                      <tr key={index}>
+                        <td className="room">{entry.room}</td>
+                        <td className="user">{entry.user}</td>
+                        <td className="old-usage">
+                          <input
+                            type="number"
+                            value={entry.old}
+                            disabled
+                            style={{ width: "60px" }}
+                          />
+                        </td>
+                        <td className="new-usage">
+                          <input
+                            type="number"
+                            value={entry.new}
+                            onChange={(e) =>
+                              handleInputChange(index, e.target.value)
+                            }
+                            disabled={!isCurrentMonth}
+                            style={{ width: "60px" }}
+                          />
+                        </td>
+                        <td className="final-usage">
+                          {entry.consumed?.toFixed(1) || 0}
+                        </td>
+                        <td>
+                          <button
+                            onClick={() => handleSave(index)}
+                            className="gray-btn"
+                            title="Save"
+                          >
+                            <FaSave className="blue-icon" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

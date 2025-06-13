@@ -169,6 +169,7 @@ const Room = () => {
       <div className="room-content">
         <div className="room-wrapper">
           <h2 className="room-title">Room Management</h2>
+          <div className="break"></div>
           <div className="roompage-actions">
             <select
               className="dropdown"

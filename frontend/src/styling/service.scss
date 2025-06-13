@@ -1,50 +1,4 @@
 .service-wrapper {
-  // background-color: #e6f5ff;
-  // border-radius: 0;
-  // padding: 30px;
-  // box-shadow: 0px 8px 30px rgba(0, 0, 0, 0.08);
-  // margin: 30px auto;
-  width: 100%;
-  height: 100vh;
-  display: flex;
-  background-color: #ddd;
-
-  &.toggled {
-    position: relative;
-    width: 100%;
-    height: 100vh;
-
-    &::after {
-      content: "";
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      left: 0;
-      top: 0;
-      background-color: #00000070;
-      z-index: 2;
-    }
-  }
-
-  .service-content {
-    width: 100%;
-    height: 100%;
-    padding: 20px 15px;
-    display: flex;
-    flex-direction: column;
-    column-gap: 15px;
-    row-gap: 15px;
-
-    .service-container {
-      background-color: #fff;
-      display: flex;
-      flex-direction: column;
-      padding: 30px;
-    }
-  }
-}
-
-.service-wrapper {
   width: 100%;
   height: 100vh;
   display: flex;
@@ -71,12 +25,17 @@
     padding: 20px 15px;
     display: flex;
     flex-direction: column;
+    box-sizing: border-box;
 
     .service-container {
       background-color: #fff;
       display: flex;
       flex-direction: column;
       padding: 30px;
+      flex: 1;
+      min-height: 0;
+      overflow: hidden;
+      box-sizing: border-box;
     }
   }
 }
@@ -94,21 +53,23 @@
 
     .service-title {
       margin-top: 10px;
-      font-size: 45px;
+      font-size: 35px;
       font-weight: bold;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       color: #47546d;
       text-align: left;
     }
+
     .break {
       width: 100%;
       height: 1px;
       background-color: #d7e0f1;
     }
+
     .service-description {
       font-size: 14px;
       color: #757678;
-      margin-top: 15px;
+      margin-top: 0px;
     }
   }
 
@@ -116,13 +77,13 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 8px;
+    margin-top: 3px;
 
     .service-search-bar input {
       padding: 6px 12px;
       border: 1px solid #ccc;
       border-radius: 6px;
-      font-size: 16px;
+      font-size: 14px;
       min-width: 240px;
 
       &:focus {
@@ -133,9 +94,9 @@
     }
 
     .add {
-      padding: 8px 16px;
+      padding: 6px 10px;
       border-radius: 6px;
-      font-size: 16px;
+      font-size: 14px;
       font-weight: bold;
       color: white;
       background-color: #22c55e;
@@ -151,18 +112,25 @@
 }
 
 .service-table {
-  margin-top: 10px;
+  margin-top: 3px;
+  overflow-y: auto;
+  flex: 1;
+
+  th,
+  td {
+    border: 1px solid #d3d3d3;
+    padding: 12px;
+    text-align: center;
+    color: #47546d;
+    font-size: 14px;
+  }
+
+  th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+  }
 }
 
-.empty {
-  text-align: center;
-  padding: 24px;
-  color: #6b7280;
-}
-
-.service-table {
-  margin-top: 10px;
-}
 .empty {
   text-align: center;
   padding: 24px;
