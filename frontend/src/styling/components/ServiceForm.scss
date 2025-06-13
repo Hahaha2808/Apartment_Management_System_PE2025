@@ -16,7 +16,7 @@
 }
 
 .edit-form-title {
-  font-size: 40px;
+  font-size: 30px;
   font-weight: bold;
   color: #4d5b76;
   margin-bottom: 30px;
@@ -44,19 +44,14 @@
   color: #4d5b76;
   margin-bottom: 6px;
   margin-top: 0px;
-  font-size: 18px;
+  font-size: 16px;
 }
 .service-input,
 .textarea {
-  padding: 10px;
+  padding: 6px;
   border: 1px solid #ccc;
   border-radius: 6px;
   font-size: 14px;
-}
-
-.textarea {
-  min-height: 80px;
-  resize: vertical;
 }
 
 .service-checkbox {
@@ -102,7 +97,7 @@
 .btn-back {
   background-color: #f0f0f0;
   color: #333;
-  padding: 8px 16px;
+  padding: 6px 10px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -112,7 +107,7 @@
 .btn-save {
   background-color: #4caf50;
   color: white;
-  padding: 8px 16px;
+  padding: 6px 10px;
   border: none;
   border-radius: 6px;
   cursor: pointer;
