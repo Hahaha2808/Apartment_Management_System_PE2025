@@ -3,6 +3,7 @@ import {
   createContract,
   getAllContracts,
   getContractById,
+  getFilteredContracts
 } from "../controllers/contractController.js";
 import {
   authenticateToken,
@@ -24,5 +25,10 @@ contractRoutes.get(
   authorizeLandlord,
   getContractById
 );
+
+contractRoutes.get(
+  "/filtered",
+  getFilteredContracts
+)
 
 export default contractRoutes;

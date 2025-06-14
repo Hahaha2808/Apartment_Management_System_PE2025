@@ -60,8 +60,8 @@ export const createContract = async (req, res) => {
 export const getAllContracts = async (req, res) => {
   try {
     const contracts = await Contract.find()
-      .populate("roomId", "roomNumber")
-      .populate("tenantId", "fullName");
+      .populate("roomId", "roomNumber price")
+      .populate("tenantId", "fullname birthday CIDNumber sex phone1 email permanentAddress");
     //.populate("serviceIds", "name");
 
     res.status(200).json(contracts);
@@ -76,8 +76,8 @@ export const getAllContracts = async (req, res) => {
 export const getContractById = async (req, res) => {
   try {
     const contract = await Contract.findById(req.params.id)
-      .populate("roomId")
-      .populate("tenantId");
+      .populate("roomId", "roomNumber price" )
+      .populate("tenantId", "fullname birthday CIDNumber sex phone1 email permanentAddress");
     //.populate("serviceIds", "name");
 
     if (!contract)
@@ -153,4 +153,66 @@ export const getActiveContractByRoom = async (req, res) => {
   }).populate("tenantId", "fullname");
   if (!contract) return res.json({ tenant: null });
   return res.json({ tenant: contract.tenantId });
+};
+
+// Filter contracts by date AND status 
+export const getFilteredContracts = async (req, res) => {
+  try {
+    const { startDate, endDate, status } = req.query;
+    const conditions = []; 
+
+    console.log("Backend received query parameters:", req.query);
+
+    // 1. Apply date range filter if both startDate and endDate are provided
+    if (startDate && endDate) {
+      const parsedStartDate = new Date(`${startDate}T00:00:00.000Z`);
+      const parsedEndDate = new Date(`${endDate}T23:59:59.999Z`);
+
+      if (isNaN(parsedStartDate.getTime()) || isNaN(parsedEndDate.getTime())) {
+          console.error("Invalid date format provided for filtering:", startDate, endDate);
+          return res.status(400).json({ message: "Invalid date format provided for filtering." });
+      }
+      conditions.push({ startDate: { $gte: parsedStartDate } });
+      conditions.push({ endDate: { $lte: parsedEndDate } });
+    }
+
+    // 2. Apply status filter based on real-time end date
+    if (status) {
+      const now = new Date(); // Current real-time date
+      if (status === "Renting") {
+        // Contract end date is in the future (or today)
+        conditions.push({ endDate: { $gte: now } });
+      } else if (status === "Rented") {
+        // Contract end date is in the past
+        conditions.push({ endDate: { $lt: now } });
+      }
+    }
+
+    // Combine all conditions with a logical $and
+    let query = {};
+    if (conditions.length > 0) {
+      query = { $and: conditions };
+    }
+    // If no filters are provided, query remains an empty object, fetching all contracts.
+
+    console.log("Backend Filter Query (MongoDB):", JSON.stringify(query, null, 2));
+
+    const contracts = await Contract.find(query)
+      .populate({
+        path: 'tenantId',
+        select: 'fullname birthday CIDNumber sex phone1 email permanentAddress'
+      })
+      .populate({
+        path: 'roomId',
+        select: 'roomNumber price'
+      });
+
+    console.log(`Backend Filter Results: Found ${contracts.length} contracts.`);
+    // console.log("Detailed Contract Results:", JSON.stringify(contracts, null, 2));
+
+    res.status(200).json(contracts);
+  } catch (err) {
+    console.error("Error fetching filtered contracts:", err);
+    res.status(500).json({ message: "Server error fetching filtered contracts.", error: err.message });
+  }
 };
