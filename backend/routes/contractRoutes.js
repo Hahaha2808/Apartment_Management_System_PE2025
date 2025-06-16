@@ -1,14 +1,11 @@
 import express from "express";
+import {authenticateToken, authorizeLandlord, authorizeAdmin} from "../middleware/authMiddleware.js"
 import {
   createContract,
   getAllContracts,
   getContractById,
-  getFilteredContracts
+  getFilteredContracts // Make sure this is imported
 } from "../controllers/contractController.js";
-import {
-  authenticateToken,
-  authorizeLandlord,
-} from "../middleware/authMiddleware.js";
 
 const contractRoutes = express.Router();
 
@@ -18,17 +15,24 @@ contractRoutes.post(
   authorizeLandlord,
   createContract
 );
+
 contractRoutes.get("/", authenticateToken, authorizeLandlord, getAllContracts);
-contractRoutes.get(
-  "/:id",
-  authenticateToken,
-  authorizeLandlord,
-  getContractById
-);
 
 contractRoutes.get(
   "/filtered",
+  authenticateToken,
+  authorizeLandlord, 
   getFilteredContracts
-)
+);
+
+contractRoutes.get(
+"/:id",
+authenticateToken,
+authorizeLandlord,
+getContractById
+);
+
+
+
 
 export default contractRoutes;

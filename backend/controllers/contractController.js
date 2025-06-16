@@ -24,9 +24,15 @@ export const createContract = async (req, res) => {
 
     const monthlyFee = room.price;
 
-    const landlordID = room.landlordID;
+    const landlordIdFromRoom = room.landlordID;
+    console.log("Landlord ID retrieved from room:", landlordIdFromRoom)
+     if (!landlordIdFromRoom) {
+      console.error("room has no associated landlord ID! cannot create contract")
+      console.warn(`Room ${roomId} has no associated landlord ID. Cannot create contract.`);
+      return res.status(400).json({ message: "Room is not associated with a landlord. Contract cannot be created." });
+    }
     //get service of this landlord
-    const services = await Service.find({ landlordID });
+    const services = await Service.find({ landlordID:landlordIdFromRoom });
     const serviceIds = services.map((s) => s._id);
 
     //create contract
@@ -40,8 +46,15 @@ export const createContract = async (req, res) => {
       payPer,
       status,
       serviceIds, // Auto-injected
+      landlordId: landlordIdFromRoom,
     });
+
+    console.log("New contract object before saving",newContract)
+
     await newContract.save();
+
+    console.log("Save contract object",newContract)
+
     if (status === "active") {
       await Room.findByIdAndUpdate(roomId, { status: "rented" });
     }
@@ -55,14 +68,25 @@ export const createContract = async (req, res) => {
     res.status(500).json({ message: "Server error.", error: err.message });
   }
 };
+console.log("***** THIS IS THE contractController.js FILE BEING LOADED *****");
 
-// Get all contracts
+// Get all contracts for the authenticated landlord
 export const getAllContracts = async (req, res) => {
   try {
-    const contracts = await Contract.find()
+    console.log("Backend: getAllContracts endpoint hit.");
+      // if (!req.user || !req.user.id) {
+      //   console.warn("Backend: getAllContracts - req.user or req.user.id is missing.");
+      //   return res.status(401).json({ message: "Unauthorized: Landlord ID not available." });
+      // }
+
+    const landlordId = req.user.id;
+    console.log("Backend: Filtering getAllContracts for Landlord ID:", landlordId);
+
+    const contracts = await Contract.find({landlordId: landlordId})
       .populate("roomId", "roomNumber price")
       .populate("tenantId", "fullname birthday CIDNumber sex phone1 email permanentAddress");
     //.populate("serviceIds", "name");
+      console.log(`Backend: getAllContracts Results: Found ${contracts.length} contracts.`);
 
     res.status(200).json(contracts);
   } catch (err) {
@@ -155,13 +179,14 @@ export const getActiveContractByRoom = async (req, res) => {
   return res.json({ tenant: contract.tenantId });
 };
 
-// Filter contracts by date AND status 
 export const getFilteredContracts = async (req, res) => {
   try {
     const { startDate, endDate, status } = req.query;
-    const conditions = []; 
+    const landlordId = req.user.id;  
+    const conditions = [{ landlordId: landlordId }];  
 
     console.log("Backend received query parameters:", req.query);
+    console.log("Filtering for Landlord ID:", landlordId); 
 
     // 1. Apply date range filter if both startDate and endDate are provided
     if (startDate && endDate) {
@@ -169,8 +194,8 @@ export const getFilteredContracts = async (req, res) => {
       const parsedEndDate = new Date(`${endDate}T23:59:59.999Z`);
 
       if (isNaN(parsedStartDate.getTime()) || isNaN(parsedEndDate.getTime())) {
-          console.error("Invalid date format provided for filtering:", startDate, endDate);
-          return res.status(400).json({ message: "Invalid date format provided for filtering." });
+        console.error("Invalid date format provided for filtering:", startDate, endDate);
+        return res.status(400).json({ message: "Invalid date format provided for filtering." });
       }
       conditions.push({ startDate: { $gte: parsedStartDate } });
       conditions.push({ endDate: { $lte: parsedEndDate } });
@@ -180,20 +205,14 @@ export const getFilteredContracts = async (req, res) => {
     if (status) {
       const now = new Date(); // Current real-time date
       if (status === "Renting") {
-        // Contract end date is in the future (or today)
         conditions.push({ endDate: { $gte: now } });
       } else if (status === "Rented") {
-        // Contract end date is in the past
         conditions.push({ endDate: { $lt: now } });
       }
     }
 
     // Combine all conditions with a logical $and
-    let query = {};
-    if (conditions.length > 0) {
-      query = { $and: conditions };
-    }
-    // If no filters are provided, query remains an empty object, fetching all contracts.
+    const query = { $and: conditions };
 
     console.log("Backend Filter Query (MongoDB):", JSON.stringify(query, null, 2));
 
@@ -208,8 +227,6 @@ export const getFilteredContracts = async (req, res) => {
       });
 
     console.log(`Backend Filter Results: Found ${contracts.length} contracts.`);
-    // console.log("Detailed Contract Results:", JSON.stringify(contracts, null, 2));
-
     res.status(200).json(contracts);
   } catch (err) {
     console.error("Error fetching filtered contracts:", err);

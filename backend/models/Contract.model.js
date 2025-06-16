@@ -12,6 +12,11 @@ const contractSchema = new mongoose.Schema(
       ref: "Tenant",
       required: true,
     },
+    landlordId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     monthlyFee: Number,
