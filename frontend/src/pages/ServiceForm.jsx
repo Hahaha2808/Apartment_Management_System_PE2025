@@ -11,14 +11,14 @@ function ServiceForm({
   const [formData, setFormData] = useState(initialData);
   const [errors, setErrors] = useState({});
 
+  const [isInitialized, setIsInitialized] = useState(false);
+
   useEffect(() => {
-    setFormData((prev) => {
-      if (JSON.stringify(prev) !== JSON.stringify(initialData)) {
-        return initialData;
-      }
-      return prev;
-    });
-  }, [initialData]);
+    if (!isInitialized) {
+      setFormData(initialData);
+      setIsInitialized(true);
+    }
+  }, [initialData, isInitialized]);
 
   const validate = () => {
     const newErrors = {};
@@ -49,11 +49,15 @@ function ServiceForm({
       <h2 className="edit-form-title">{title}</h2>
 
       <div className="edit-form-grid">
+        {/* ✅ Ô nhập tên đã fix */}
         <div className="edit-form-group">
           <label className="service-label">Name *</label>
           <input
+            type="text"
             name="name"
-            value={formData.name}
+            placeholder="Enter service name"
+            autoComplete="off"
+            value={formData.name || ""}
             onChange={handleChange}
             className="service-input"
           />
