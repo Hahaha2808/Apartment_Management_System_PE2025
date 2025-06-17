@@ -1,8 +1,16 @@
 import express from "express";
-import { calculatePayments } from "../controllers/paymentController.js";
+import {
+  createPayment,
+  getPayments,
+  deletePayment,
+} from "../controllers/paymentController.js";
 
 const paymentRoutes = express.Router();
 
-paymentRoutes.post("/calculate", calculatePayments);
+paymentRoutes.get("/", getPayments);
+
+paymentRoutes.post("/calculate/single", createPayment);
+
+paymentRoutes.delete("/:id", deletePayment);
 
 export default paymentRoutes;

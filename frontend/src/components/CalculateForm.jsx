@@ -1,7 +1,6 @@
-// CalculatePopup.jsx
+// CalculateForm.jsx
 import React, { useState, useEffect } from "react";
 import "../styling/components/CalculateForm.scss";
-import axios from "axios";
 import DateField from "./DateField";
 
 function CalculateForm({
@@ -13,6 +12,9 @@ function CalculateForm({
 }) {
   const [invoiceDate, setInvoiceDate] = useState(new Date());
   const [billingMonth, setBillingMonth] = useState(new Date());
+  useEffect(() => {
+    console.log("🧾 Received rooms in popup:", rooms);
+  }, [rooms]);
 
   return (
     <div className="modal-overlay">
@@ -48,7 +50,7 @@ function CalculateForm({
               onChange={(e) => setSelectedRoom(e.target.value)}
               className="date-input"
             >
-              <option value="all">All</option>
+              <option value="">-- Select Room --</option>
               {rooms.map((room) => (
                 <option key={room._id} value={room._id}>
                   {room.roomNumber}
@@ -62,7 +64,9 @@ function CalculateForm({
           <button
             className="btn confirm"
             onClick={() =>
-              onConfirm({ invoiceDate, billingMonth, selectedRoom })
+              selectedRoom
+                ? onConfirm({ invoiceDate, billingMonth, selectedRoom })
+                : alert("Please select a room first")
             }
           >
             Calculate

@@ -59,16 +59,19 @@ export const createContract = async (req, res) => {
 // Get all contracts
 export const getAllContracts = async (req, res) => {
   try {
-    const contracts = await Contract.find()
-      .populate("roomId", "roomNumber")
-      .populate("tenantId", "fullName");
-    //.populate("serviceIds", "name");
+    const landlordID = req.user.id; // ✅ lấy từ token (middleware đã giải mã sẵn)
 
-    res.status(200).json(contracts);
+    const rooms = await Room.find({ landlordID }).select("_id");
+
+    const roomIds = rooms.map((r) => r._id);
+
+    const contracts = await Contract.find({
+      roomId: { $in: roomIds },
+    });
+
+    res.json(contracts);
   } catch (err) {
-    res
-      .status(500)
-      .json({ message: "Failed to fetch contracts.", error: err.message });
+    res.status(500).json({ message: "Error fetching contracts", error: err });
   }
 };
 

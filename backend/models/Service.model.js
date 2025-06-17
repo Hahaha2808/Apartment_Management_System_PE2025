@@ -4,7 +4,11 @@ const serviceSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     price: { type: Number, required: true },
-    type: { type: String, required: true },
+    type: {
+      type: String,
+      required: true,
+      enum: ["ELECTRIC", "WATER", "OTHER"],
+    },
     landlordID: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
