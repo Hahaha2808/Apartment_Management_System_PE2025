@@ -26,7 +26,7 @@ export const createContract = async (req, res) => {
 
     const landlordID = room.landlordID;
     //get service of this landlord
-    const services = await Service.find({ landlordID });
+    const services = await Service.find({ landlordID, status: "active" });
     const serviceIds = services.map((s) => s._id);
 
     //create contract

@@ -3,6 +3,7 @@ import {
   createContract,
   getAllContracts,
   getContractById,
+  updateContract,
 } from "../controllers/contractController.js";
 import {
   authenticateToken,
@@ -23,6 +24,12 @@ contractRoutes.get(
   authenticateToken,
   authorizeLandlord,
   getContractById
+);
+contractRoutes.put(
+  "/:id",
+  authenticateToken,
+  authorizeLandlord,
+  updateContract
 );
 
 export default contractRoutes;
