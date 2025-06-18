@@ -9,22 +9,23 @@ export const getRoomWater = async (req, res) => {
     const now = new Date();
     const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     const contracts = await Contract.find({
       startDate: { $lte: endOfMonth },
-      endDate: { $gte: now },
+      endDate: { $gte: today },
       status: "active",
     })
-      .populate({
-        path: "roomId",
-        match: { landlordID: req.user.id },
-        select: "roomNumber landlordID",
-      })
+      .populate("roomId", "roomNumber landlordID")
       .populate("tenantId", "fullname");
 
     const result = await Promise.all(
       contracts
-        .filter((contract) => contract.roomId) // loại phòng không thuộc landlord
+        .filter(
+          (contract) =>
+            contract.roomId &&
+            contract.roomId.landlordID?.toString() === req.user.id
+        )
         .map(async (contract) => {
           const previousRecord = await WaterMeter.findOne({
             contract_id: contract._id,

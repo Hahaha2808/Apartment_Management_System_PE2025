@@ -40,8 +40,10 @@ export const createPayment = async (req, res) => {
     }
 
     const landlordID = room.landlordID;
-    const allServices = await Service.find({ landlordID, status: "active" });
-
+    const allServices = await Service.find({
+      _id: { $in: contract.serviceIds },
+      status: "active",
+    });
     const electricService = allServices.find(
       (s) => s.type?.toLowerCase() === "electric"
     );
