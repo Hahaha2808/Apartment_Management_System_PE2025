@@ -106,7 +106,7 @@ const Room = () => {
     filterRooms();
   };
   const handleCustomersClick = () => {
-    console.log("Quản lý khách hàng");
+    navigate("/customer");
   };
 
   const handleEditRoom = (roomId) => {
@@ -117,7 +117,7 @@ const Room = () => {
   const handleDeleteRoom = async (roomId) => {
     const room = rooms.find((r) => r._id === roomId);
     if (room.currentContractId) {
-      alert("⚠️ This room has an active contract and cannot be disabled.");
+      alert("This room has an active contract and cannot be disabled.");
       return;
     }
     try {

@@ -11,10 +11,52 @@ function Customer() {
   const [data, setData] = useState([]);
   const [selectedStartDate, setSelectedStartDate] = useState(null);
   const [selectedEndDate, setSelectedEndDate] = useState(null);
-  const [feeStatus, setFeeStatus] = useState("");
+  const [status, setStatus] = useState("");
+  const navigate = useNavigate();
+  const fetchCustomers = async () => {
+    try {
+      const params = {
+        status,
+      };
 
-  const handleFeeStatusChange = (e) => {
-    setFeeStatus(e.target.value);
+      if (selectedStartDate) {
+        params.monthStart =
+          selectedStartDate.getFullYear() +
+          "-" +
+          (selectedStartDate.getMonth() + 1);
+      }
+      if (selectedEndDate) {
+        params.monthEnd =
+          selectedEndDate.getFullYear() +
+          "-" +
+          (selectedEndDate.getMonth() + 1);
+      }
+      const res = await axios.get(
+        "http://localhost:5000/api/contracts/customers",
+        {
+          params,
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          },
+        }
+      );
+
+      setData(res.data);
+    } catch (err) {
+      console.error("Failed to fetch customers", err);
+    }
+  };
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (!token) {
+      alert("You must be logged in to access this page.");
+      navigate("/login");
+    }
+    fetchCustomers();
+  }, []);
+
+  const handleStatusChange = (e) => {
+    setStatus(e.target.value);
   };
 
   return (
@@ -42,8 +84,8 @@ function Customer() {
                 <label>Status</label>
                 <select
                   className="dropdown"
-                  value={feeStatus}
-                  onChange={handleFeeStatusChange}
+                  value={status}
+                  onChange={handleStatusChange}
                   aria-label="Status"
                 >
                   <option value="">All</option>
@@ -51,7 +93,7 @@ function Customer() {
                   <option value="Rented">Rented</option>
                 </select>
               </div>
-              <button className="search-btn">
+              <button className="search-btn" onClick={fetchCustomers}>
                 <FaSearch className="icon"></FaSearch>View
               </button>
             </div>
@@ -73,7 +115,24 @@ function Customer() {
                     <th>Deposit (VND)</th>
                   </tr>
                 </thead>
-                <tbody></tbody>
+                <tbody>
+                  {data.map((item, index) => (
+                    <tr key={index}>
+                      <td>{item.fullname}</td>
+                      <td>{item.idNumber}</td>
+                      <td>{new Date(item.dob).toLocaleDateString()}</td>
+                      <td>{item.address}</td>
+                      <td>{item.phone}</td>
+                      <td>{item.home}</td>
+                      <td>{item.room}</td>
+                      <td>{new Date(item.startDate).toLocaleDateString()}</td>
+                      <td>{new Date(item.endDate).toLocaleDateString()}</td>
+                      <td>{item.expiryDays} days</td>
+                      <td>{item.unitPrice.toLocaleString()}</td>
+                      <td>{item.deposit.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
             </div>
           </div>

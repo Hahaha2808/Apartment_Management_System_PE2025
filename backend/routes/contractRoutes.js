@@ -4,6 +4,8 @@ import {
   getAllContracts,
   getContractById,
   updateContract,
+  getAllCustomers,
+  getExpiringContracts,
 } from "../controllers/contractController.js";
 import {
   authenticateToken,
@@ -20,10 +22,22 @@ contractRoutes.post(
 );
 contractRoutes.get("/", authenticateToken, authorizeLandlord, getAllContracts);
 contractRoutes.get(
+  "/customers",
+  authenticateToken,
+  authorizeLandlord,
+  getAllCustomers
+);
+contractRoutes.get(
   "/:id",
   authenticateToken,
   authorizeLandlord,
   getContractById
+);
+contractRoutes.get(
+  "/expiring",
+  authenticateToken,
+  authorizeLandlord,
+  getExpiringContracts
 );
 contractRoutes.put(
   "/:id",

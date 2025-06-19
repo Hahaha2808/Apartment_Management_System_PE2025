@@ -3,6 +3,8 @@ import SidePanel from "../components/SidePanel";
 import CalculateForm from "../components/CalculateForm";
 import axios from "axios";
 import "../styling/payment.scss";
+import { useNavigate } from "react-router-dom";
+import PopupInvoice from "../components/BillPopup";
 import {
   FaEye,
   FaMoneyBillWave,
@@ -19,60 +21,73 @@ function Payments() {
   const [selectedEndDate, setSelectedEndDate] = useState(null);
   const [rooms, setRooms] = useState([]);
   const [selectedRoom, setSelectedRoom] = useState("");
+  const [allPayments, setAllPayments] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
+  const [viewingPayment, setViewingPayment] = useState(null);
+  const navigate = useNavigate();
+  useEffect(() => {
+    const now = new Date();
+    setSelectedStartDate(new Date(now.getFullYear(), now.getMonth(), 1)); // ngày đầu tháng
+
+    const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    setSelectedEndDate(lastDayOfMonth);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem("authToken");
-
-        // 1. Fetch contracts
-        const contractRes = await axios.get(
-          "http://localhost:5000/api/contracts",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+        if (!token) {
+          alert("You must be logged in to access this page.");
+          navigate("/login");
+        }
+        const today = new Date();
+        const currentMonthStart = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          1
         );
+        const nextMonthStart = new Date(
+          today.getFullYear(),
+          today.getMonth() + 1,
+          1
+        );
+
+        const params = {
+          startDate: currentMonthStart.toISOString(),
+          endDate: nextMonthStart.toISOString(),
+        };
+
+        const [contractRes, roomRes, paymentRes] = await Promise.all([
+          axios.get("http://localhost:5000/api/contracts", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get("http://localhost:5000/api/rooms", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get("http://localhost:5000/api/payments", {
+            headers: { Authorization: `Bearer ${token}` },
+            params,
+          }),
+        ]);
+
         const activeContracts = contractRes.data.filter(
           (c) => c.status === "active"
         );
         const activeRoomIds = [
           ...new Set(activeContracts.map((c) => c.roomId?.toString())),
         ];
-
-        console.log("✅ Contracts:", contractRes.data);
-        console.log("✅ Active contracts:", activeContracts);
-        console.log("✅ Active room IDs:", activeRoomIds);
-
-        // 2. Fetch rooms
-        const roomRes = await axios.get("http://localhost:5000/api/rooms", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
         const rentingRooms = roomRes.data.filter((r) =>
           activeRoomIds.includes(r._id?.toString())
         );
-
-        console.log("✅ All rooms:", roomRes.data);
-        console.log("✅ Renting rooms:", rentingRooms);
-
         setRooms(rentingRooms);
-
-        // 3. Fetch payments
-        const paymentRes = await axios.get(
-          "http://localhost:5000/api/payments",
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        console.log("✅ Payments:", paymentRes.data);
 
         const paymentData = paymentRes.data.map((p) => {
           const matchedRoom = rentingRooms.find(
             (r) => r._id.toString() === p.room_id.toString()
           );
-
           return {
-            _id: p._id, // cần để delete
+            _id: p._id,
             room: matchedRoom?.roomNumber || "N/A",
             tenant: p.tenant_name,
             total: p.total_amount,
@@ -81,9 +96,10 @@ function Payments() {
           };
         });
 
+        setAllPayments(paymentData);
         setData(paymentData);
       } catch (err) {
-        console.error("❌ Fetching failed:", err);
+        console.error("Fetching failed:", err);
       }
     };
 
@@ -98,7 +114,7 @@ function Payments() {
     try {
       const token = localStorage.getItem("authToken");
 
-      const monthYear = billingMonth.toISOString().slice(0, 7); // format YYYY-MM
+      const monthYear = billingMonth.toISOString().slice(0, 7);
       const formattedInvoiceDate = invoiceDate.toISOString();
 
       const res = await axios.post(
@@ -131,14 +147,75 @@ function Payments() {
 
       setShowPopup(false);
     } catch (err) {
+      const msg = err?.response?.data?.message || "Error calculating payment";
+
       if (err.response?.status === 409) {
-        alert(err.response.data.message);
+        alert("" + msg);
+      } else if (
+        err.response?.status === 404 &&
+        msg.includes("No active contract")
+      ) {
+        alert("This room has no valid contract in the selected month.");
       } else {
-        alert("There is existing payment for this month!");
+        alert("" + msg);
       }
-      console.error("Error calculating:", err);
+    }
+
+    console.error("Error calculating:", err);
+  };
+  const handleFilter = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+
+      if (!selectedStartDate || !selectedEndDate) {
+        alert("Please select both start and end dates.");
+        return;
+      }
+
+      const fromYear = selectedStartDate.getFullYear();
+      const fromMonth = selectedStartDate.getMonth();
+
+      const toYear = selectedEndDate.getFullYear();
+      const toMonth = selectedEndDate.getMonth();
+
+      const sameMonth = fromYear === toYear && fromMonth === toMonth;
+
+      const start = new Date(fromYear, fromMonth, 1, 0, 0, 0, 0);
+      const end = new Date(toYear, toMonth + 1, 0, 23, 59, 59, 999);
+
+      const params = {
+        startDate: start.toISOString(),
+        endDate: end.toISOString(),
+      };
+
+      const res = await axios.get("http://localhost:5000/api/payments", {
+        headers: { Authorization: `Bearer ${token}` },
+        params,
+      });
+
+      const paymentData = res.data.map((p) => {
+        const matchedRoom = rooms.find(
+          (r) => r._id.toString() === p.room_id.toString()
+        );
+
+        return {
+          _id: p._id,
+          room: matchedRoom?.roomNumber || "N/A",
+          tenant: p.tenant_name,
+          total: p.total_amount,
+          paid: p.amount_paid,
+          invoice_date: p.invoice_date,
+          remaining: p.remaining,
+        };
+      });
+
+      setData(paymentData);
+    } catch (err) {
+      console.error("Error filtering payments:", err);
+      alert("Failed to filter payments.");
     }
   };
+
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this payment?"))
       return;
@@ -157,6 +234,23 @@ function Payments() {
       alert("Failed to delete payment");
     }
   };
+  const handleView = async (paymentId) => {
+    try {
+      const token = localStorage.getItem("authToken");
+      const res = await axios.get(
+        `http://localhost:5000/api/payments/${paymentId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      setViewingPayment(res.data); // chứa đầy đủ dữ liệu
+    } catch (err) {
+      alert("Failed to fetch payment details.");
+      console.error("❌ Error loading invoice:", err);
+    }
+  };
+
   return (
     <div className="payment-container">
       <SidePanel selected="payment" />
@@ -200,7 +294,7 @@ function Payments() {
                 setSelectedDate={setSelectedEndDate}
                 title="To"
               />
-              <button className="search-btn">
+              <button className="search-btn" onClick={handleFilter}>
                 <FaSearch className="icon" /> View
               </button>
             </div>
@@ -225,7 +319,10 @@ function Payments() {
                       <td>{entry.paid.toLocaleString()}</td>
                       <td>{entry.remaining.toLocaleString()}</td>
                       <td>
-                        <button className="gray-btn">
+                        <button
+                          className="gray-btn"
+                          onClick={() => handleView(entry._id)}
+                        >
                           <FaEye className="blue-icon" />
                         </button>
                         <button className="gray-btn">
@@ -258,6 +355,12 @@ function Payments() {
                 handleCalculate(formData);
                 setSelectedRoom("");
               }}
+            />
+          )}
+          {viewingPayment && (
+            <PopupInvoice
+              payment={viewingPayment}
+              onClose={() => setViewingPayment(null)}
             />
           )}
         </div>

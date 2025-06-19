@@ -1,14 +1,23 @@
-/* ===== Add Room Form Styles ===== */
-/*.edit-room-wrapper {
-  background-color: #fff;
+.edit-room-wrapper {
+  width: 500px;
+  max-width: 95vw; /* ✅ responsive chiều rộng */
+  max-height: 90vh;
+  overflow-y: auto;
+  background-color: white;
   padding: 24px;
-  border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-  max-width: 800px;
-  margin: auto;
-  font-family: Arial, sans-serif;
+  border-radius: 16px;
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+  margin: 0 auto;
+
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
-*/
+
+.edit-room-header {
+  width: 100%;
+}
 
 .edit-room-title {
   font-size: 32px;
@@ -24,6 +33,13 @@
   justify-content: center;
   flex-wrap: wrap;
   gap: 0px;
+  overflow-x: hidden;
+
+  /* ✅ chuyển sang 1 cột nếu màn hình nhỏ */
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: center;
+  }
 }
 
 .edit-room-container label {
@@ -39,13 +55,14 @@
 .edit-room-container select,
 .edit-room-container textarea {
   width: 100%;
-  padding: 6px;
-  font-size: 15px;
+  padding: 5px;
+  font-size: 13px;
   border: 1px solid #ccc;
   border-radius: 6px;
   outline: none;
   transition: 0.3s;
   margin-bottom: 0px;
+  min-width: 0;
 }
 
 .edit-room-container input:focus,
@@ -60,9 +77,23 @@
 
 .edit-room-container .form-group {
   width: 90%;
-  margin-bottom: 10px;
-  margin-left: 20px;
-  margin-right: 20px;
+  margin: 10px;
+
+  @media (max-width: 768px) {
+    width: 95%;
+  }
+}
+
+.edit-room-container .inline-input-unit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+}
+
+.edit-room-container .inline-input-unit input {
+  flex: 1;
+  min-width: 0;
 }
 
 .edit-room-container .checkbox-group {
@@ -83,6 +114,11 @@
   background-color: #123254;
   font-size: 14px;
   margin-right: 20px;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+    padding: 6px 12px;
+  }
 }
 
 .edit-room-wrapper .btn:hover {
@@ -107,4 +143,22 @@
   color: red;
   font-size: 14px;
   margin-top: 20px;
+}
+
+.error-text {
+  color: red;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* ✅ Responsive font */
+@media (max-width: 480px) {
+  .edit-room-title {
+    font-size: 24px;
+  }
+
+  .edit-room-container input,
+  .edit-room-container textarea {
+    font-size: 12px;
+  }
 }

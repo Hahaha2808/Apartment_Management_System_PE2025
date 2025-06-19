@@ -3,7 +3,6 @@ import Contract from "../models/Contract.model.js";
 import Room from "../models/Room.model.js";
 import Tenant from "../models/Tenant.model.js";
 
-// Lấy danh sách phòng có hợp đồng active trong tháng hiện tại (để nhập chỉ số điện)
 export const getRoomElectric = async (req, res) => {
   try {
     const now = new Date();
