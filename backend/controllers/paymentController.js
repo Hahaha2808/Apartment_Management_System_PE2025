@@ -9,10 +9,30 @@ export const createPayment = async (req, res) => {
   try {
     const { monthYear, roomId, invoiceDate } = req.body;
 
-    const start = new Date(`${monthYear}-01T00:00:00.000Z`);
-    const end = new Date(`${monthYear}-31T23:59:59.999Z`);
+    const now = new Date();
+    const invoiceMonthDate = new Date(invoiceDate);
+    if (
+      invoiceMonthDate.getFullYear() > now.getFullYear() ||
+      (invoiceMonthDate.getFullYear() === now.getFullYear() &&
+        invoiceMonthDate.getMonth() > now.getMonth())
+    ) {
+      return res
+        .status(400)
+        .json({ message: "You cannot create a payment for a future month." });
+    }
 
-    const room = await Room.findById(roomId);
+    const start = new Date(`${monthYear}-01T00:00:00.000Z`);
+    const end = new Date(
+      start.getFullYear(),
+      start.getMonth() + 1,
+      0,
+      23,
+      59,
+      59,
+      999
+    );
+
+    const room = await Room.findOne({ _id: roomId, landlordID: req.user.id });
     if (!room) return res.status(404).json({ message: "Room not found" });
 
     const contract = await Contract.findOne({
@@ -23,13 +43,16 @@ export const createPayment = async (req, res) => {
     }).populate("tenantId");
 
     if (!contract)
-      return res.status(404).json({
-        message: "No active contract found for this room and month.",
-      });
+      return res
+        .status(404)
+        .json({ message: "No active contract found for this room and month." });
 
     const existing = await Payment.findOne({
       contract_id: contract._id,
-      month: start,
+      month: {
+        $gte: new Date(start.getFullYear(), start.getMonth(), 1),
+        $lt: new Date(start.getFullYear(), start.getMonth() + 1, 1),
+      },
     });
 
     if (existing) {
@@ -39,11 +62,12 @@ export const createPayment = async (req, res) => {
       });
     }
 
-    const landlordID = room.landlordID;
     const allServices = await Service.find({
       _id: { $in: contract.serviceIds },
       status: "active",
+      landlordID: req.user.id,
     });
+
     const electricService = allServices.find(
       (s) => s.type?.toLowerCase() === "electric"
     );
@@ -73,12 +97,10 @@ export const createPayment = async (req, res) => {
     const waterTotal = waterConsumed * waterPrice;
 
     const rent = contract.monthlyFee || 0;
-
     const otherServices = monthlyServices.map((s) => ({
       service_name: s.name,
       unit_price: s.price,
     }));
-
     const serviceFee = otherServices.reduce((sum, s) => sum + s.unit_price, 0);
     const total = rent + electricTotal + waterTotal + serviceFee;
 
@@ -86,6 +108,7 @@ export const createPayment = async (req, res) => {
       contract_id: contract._id,
       room_id: room._id,
       tenant_name: contract.tenantId.fullname,
+      landlordID: req.user.id,
       month: start,
       invoice_date: new Date(invoiceDate),
       rent_amount: rent,
@@ -117,25 +140,100 @@ export const createPayment = async (req, res) => {
 
 export const getPayments = async (req, res) => {
   try {
-    const payments = await Payment.find().sort({ createdAt: -1 });
+    const { startDate, endDate } = req.query;
+    const landlordId = req.user.id;
+
+    const rooms = await Room.find({ landlordID: landlordId });
+    const roomIdSet = new Set(rooms.map((r) => r._id.toString()));
+    const contracts = await Contract.find({
+      roomId: { $in: Array.from(roomIdSet) },
+    });
+    const contractIdSet = new Set(contracts.map((c) => c._id.toString()));
+
+    const query = { contract_id: { $in: Array.from(contractIdSet) } };
+
+    if (startDate && endDate) {
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+
+      const sameMonth =
+        start.getFullYear() === end.getFullYear() &&
+        start.getMonth() === end.getMonth();
+
+      query.month = sameMonth
+        ? {
+            $gte: new Date(start.getFullYear(), start.getMonth(), 1),
+            $lt: new Date(start.getFullYear(), start.getMonth() + 1, 1),
+          }
+        : {
+            $gte: new Date(start.getFullYear(), start.getMonth(), 1),
+            $lt: new Date(end.getFullYear(), end.getMonth() + 1, 1),
+          };
+    }
+
+    const payments = await Payment.find(query).sort({ createdAt: -1 });
     res.json(payments);
   } catch (err) {
+    console.error("Error in getPayments:", err);
     res.status(500).json({ message: "Failed to load payments" });
   }
 };
 
-// DELETE /api/payments/:id
-export const deletePayment = async (req, res) => {
+export const getPaymentById = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const deleted = await Payment.findByIdAndDelete(id);
-    if (!deleted) {
-      return res.status(404).json({ message: "Payment not found" });
+    const payment = await Payment.findById(id);
+    if (!payment) return res.status(404).json({ message: "Payment not found" });
+
+    const contract = await Contract.findById(payment.contract_id);
+    if (!contract)
+      return res.status(404).json({ message: "Contract not found" });
+
+    const room = await Room.findById(contract.roomId);
+    if (!room || room.landlordID.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Unauthorized access" });
     }
 
+    const enrichedPayment = {
+      ...payment.toObject(),
+      roomNumber: room.roomNumber,
+      address: room.address,
+      contractStart: contract.startDate,
+      contractEnd: contract.endDate,
+    };
+
+    res.json(enrichedPayment);
+  } catch (err) {
+    console.error("Error in getPaymentById:", err);
+    res
+      .status(500)
+      .json({ message: "Error fetching payment", error: err.message });
+  }
+};
+
+export const deletePayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const landlordId = req.user.id;
+
+    const payment = await Payment.findById(id);
+    if (!payment) return res.status(404).json({ message: "Payment not found" });
+
+    const contract = await Contract.findById(payment.contract_id);
+    if (!contract)
+      return res.status(404).json({ message: "Contract not found" });
+
+    const room = await Room.findById(contract.roomId);
+    if (!room || room.landlordID.toString() !== landlordId)
+      return res
+        .status(403)
+        .json({ message: "You are not authorized to delete this payment" });
+
+    await Payment.findByIdAndDelete(id);
     res.json({ message: "Payment deleted successfully" });
   } catch (err) {
+    console.error("Error deleting payment:", err);
     res
       .status(500)
       .json({ message: "Error deleting payment", error: err.message });

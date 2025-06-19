@@ -19,9 +19,8 @@ const paymentSchema = new mongoose.Schema(
       required: true,
     },
 
-    // Khoảng thời gian của tháng tính tiền (VD: tháng 6/2025 là từ 01/06 đến 30/06)
     month: {
-      type: Date, // ngày đầu tháng
+      type: Date,
       required: true,
     },
 
@@ -84,6 +83,7 @@ const paymentSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+paymentSchema.index({ contract_id: 1, month: 1 }, { unique: true });
 
 const Payment = mongoose.model("Payment", paymentSchema);
 export default Payment;

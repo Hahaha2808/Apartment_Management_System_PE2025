@@ -3,14 +3,29 @@ import {
   createPayment,
   getPayments,
   deletePayment,
+  getPaymentById,
 } from "../controllers/paymentController.js";
-
+import {
+  authenticateToken,
+  authorizeLandlord,
+} from "../middleware/authMiddleware.js";
 const paymentRoutes = express.Router();
 
-paymentRoutes.get("/", getPayments);
+paymentRoutes.get("/", authenticateToken, authorizeLandlord, getPayments);
+paymentRoutes.get("/:id", authenticateToken, authorizeLandlord, getPaymentById);
 
-paymentRoutes.post("/calculate/single", createPayment);
+paymentRoutes.post(
+  "/calculate/single",
+  authenticateToken,
+  authorizeLandlord,
+  createPayment
+);
 
-paymentRoutes.delete("/:id", deletePayment);
+paymentRoutes.delete(
+  "/:id",
+  authenticateToken,
+  authorizeLandlord,
+  deletePayment
+);
 
 export default paymentRoutes;
