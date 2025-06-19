@@ -106,24 +106,41 @@ function Electric() {
       return;
     }
 
-    const month = selectedDate.getMonth() + 1;
+    const month = selectedDate.getMonth();
     const year = selectedDate.getFullYear();
 
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    if (month === currentMonth && year === currentYear) {
+      // ✅ Tháng hiện tại → gọi lại fetchCurrentMonthData
+      fetchCurrentMonthData();
+      return;
+    }
+
+    // ❗ Tháng khác → gọi API /history
     axios
       .get(
-        `http://localhost:5000/api/electric-meters/history?month=${month}&year=${year}`,
+        `http://localhost:5000/api/electric-meters/history?month=${
+          month + 1
+        }&year=${year}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       )
       .then((res) => {
-        const filteredData = res.data.map((item) => ({
-          contract_id: item.contract_id._id,
-          room: item.contract_id.roomId.roomNumber,
-          user: item.contract_id.tenantId.fullname,
-          old: item.previousIndex,
-          new: item.currentIndex,
-        }));
+        const filteredData = res.data.map((item) => {
+          const consumed = item.currentIndex - item.previousIndex;
+          return {
+            contract_id: item.contract_id._id,
+            room: item.contract_id.roomId.roomNumber,
+            user: item.contract_id.tenantId.fullname,
+            old: item.previousIndex,
+            new: item.currentIndex,
+            consumed: consumed >= 0 ? consumed : 0,
+          };
+        });
         setData(filteredData);
       })
       .catch((err) => {

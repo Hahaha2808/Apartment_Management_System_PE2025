@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import "../styling/components/AddCustomerForm.scss";
 import SidePanel from "../components/SidePanel";
 import axios from "axios";
+import { differenceInYears, addMonths, isBefore } from "date-fns";
 
 const AddCustomerForm = () => {
   const { roomId, contractId } = useParams();
@@ -25,53 +26,6 @@ const AddCustomerForm = () => {
     permanentAddress: "",
     note: "",
   });
-
-  const handleBack = () => {
-    navigate("/rooms");
-  };
-
-  const handleChangeTenant = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSaveTenant = async (e) => {
-    e.preventDefault();
-    try {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        alert("You need to log in first.");
-      }
-
-      const response = await axios.post(
-        "http://localhost:5000/api/tenant/add",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (response.data.success) {
-        alert("Tenant added successfully!");
-        //navigate("/rooms");
-        setTenantId(response.data.tenant._id);
-        setActiveTab("contract");
-      } else {
-        alert("Save failed: " + response.data.message);
-      }
-    } catch (error) {
-      if (error.response && error.response.data) {
-        console.error("Error from server:", error.response.data);
-        alert("Error: " + JSON.stringify(error.response.data));
-      } else {
-        alert("Unknown error occurred.");
-      }
-    }
-  };
   const [contractData, setContractData] = useState({
     startDate: "",
     endDate: "",
@@ -79,11 +33,137 @@ const AddCustomerForm = () => {
     deposit: "",
     payPer: "1",
   });
+  const [errors, setErrors] = useState({});
+
+  const validateTenant = () => {
+    const newErrors = {};
+    if (!formData.fullname.trim()) newErrors.fullname = "Full name is required";
+    if (!formData.birthday) {
+      newErrors.birthday = "Birthday is required";
+    } else if (
+      differenceInYears(new Date(), new Date(formData.birthday)) < 18
+    ) {
+      newErrors.birthday = "Tenant must be at least 18 years old";
+    }
+    if (!formData.CIDNumber.trim())
+      newErrors.CIDNumber = "CID Number is required";
+    if (!formData.sex) newErrors.sex = "Sex is required";
+    if (!formData.phone1.trim()) {
+      newErrors.phone1 = "Phone number is required";
+    } else if (!/^\d{10}$/.test(formData.phone1)) {
+      newErrors.phone1 = "Phone number must be 10 digits";
+    }
+    if (!formData.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^\S+@\S+\.\S+$/.test(formData.email)) {
+      newErrors.email = "Invalid email format";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateContract = () => {
+    const newErrors = {};
+    const now = new Date();
+    const start = new Date(contractData.startDate);
+    const end = new Date(contractData.endDate);
+
+    if (!contractData.startDate) {
+      newErrors.startDate = "Start date is required";
+    } else if (isBefore(now, start)) {
+      newErrors.startDate = "Start date cannot be in the future";
+    }
+
+    if (!contractData.endDate) {
+      newErrors.endDate = "End date is required";
+    } else if (contractData.startDate && isBefore(end, addMonths(start, 5))) {
+      newErrors.endDate = "End date must be at least 5 months after start date";
+    }
+
+    if (!contractData.deposit) {
+      newErrors.deposit = "Deposit is required";
+    } else if (
+      isNaN(contractData.deposit) ||
+      Number(contractData.deposit) < 0
+    ) {
+      newErrors.deposit = "Deposit must be a non-negative number";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleChangeTenant = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleChangeContract = (e) => {
+    const { name, value } = e.target;
+    setContractData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveTenant = async (e) => {
+    e.preventDefault();
+    if (!validateTenant()) return;
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        alert("You are not logged in or token missing!");
+        navigate("/login");
+        return;
+      }
+
+      const response = await axios.post(
+        "http://localhost:5000/api/tenant/add",
+        formData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data.success) {
+        alert("Tenant added successfully!");
+        setTenantId(response.data.tenant._id);
+        setActiveTab("contract");
+      } else {
+        alert("Save failed: " + response.data.message);
+      }
+    } catch (err) {
+      alert("Error: " + (err.response?.data?.message || "Unknown error"));
+    }
+  };
+
+  const handleSaveContract = async () => {
+    if (!validateContract()) return;
+    if (!tenantId) return alert("Please save tenant first.");
+    try {
+      const token = localStorage.getItem("authToken");
+      const response = await axios.post(
+        "http://localhost:5000/api/contracts/add",
+        { roomId, tenantId, ...contractData, status: "active" },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (response.data.success) {
+        alert("Contract saved successfully!");
+        navigate("/rooms");
+      } else {
+        alert("Failed to save contract.");
+      }
+    } catch (err) {
+      alert("Error saving contract.");
+    }
+  };
+
+  const handleBack = () => {
+    navigate("/rooms");
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       const token = localStorage.getItem("authToken");
-
-      if (!token) return;
+      if (!token) {
+        alert("You are not logged in or token missing!");
+        navigate("/login");
+        return;
+      }
 
       try {
         if (contractId) {
@@ -156,50 +236,6 @@ const AddCustomerForm = () => {
     }
   }, [roomId, contractId]);
 
-  const handleChangeContract = (e) => {
-    const { name, value } = e.target;
-    setContractData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-  const handleSaveContract = async () => {
-    if (!tenantId) {
-      alert("Tenant ID missing. Please save tenant first.");
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem("authToken");
-      const contractPayload = {
-        roomId,
-        tenantId,
-        ...contractData,
-        status: "active",
-      };
-
-      const response = await axios.post(
-        "http://localhost:5000/api/contracts/add",
-        contractPayload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (response.data.success) {
-        alert("Contract saved successfully!");
-        navigate("/rooms");
-      } else {
-        alert("Failed to save contract.");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error saving contract.");
-    }
-  };
-
   const handleEndContract = async () => {
     if (!contractId) return;
 
@@ -208,6 +244,11 @@ const AddCustomerForm = () => {
 
     try {
       const token = localStorage.getItem("authToken");
+      if (!token) {
+        alert("You are not logged in or token missing!");
+        navigate("/login");
+        return;
+      }
       const res = await axios.put(
         `http://localhost:5000/api/contracts/${contractId}`,
         { status: "terminated" },
@@ -230,9 +271,12 @@ const AddCustomerForm = () => {
   const handleUpdateTenant = async () => {
     try {
       const token = localStorage.getItem("authToken");
-      if (!token || !contractId) return;
+      if (!token || !contractId) {
+        alert("You are not logged in or token missing!");
+        navigate("/login");
+        return;
+      }
 
-      // lấy tenantId từ contract trước
       const res = await axios.get(
         `http://localhost:5000/api/contracts/${contractId}`,
         {
@@ -277,7 +321,7 @@ const AddCustomerForm = () => {
           <div className="customer-tabs">
             {renderTab("information", "Information of tenant")}
             {renderTab("service", "Service")}
-            {renderTab("member", "Member")}
+
             {renderTab("contract", "Contract")}
           </div>
 
@@ -294,6 +338,9 @@ const AddCustomerForm = () => {
                       value={formData.fullname}
                       onChange={handleChangeTenant}
                     />
+                    {errors.fullname && (
+                      <span className="error-message">{errors.fullname}</span>
+                    )}
                   </div>
 
                   <div className="c-form-group">
@@ -304,6 +351,9 @@ const AddCustomerForm = () => {
                       value={formData.birthday}
                       onChange={handleChangeTenant}
                     />
+                    {errors.birthday && (
+                      <span className="error-message">{errors.birthday}</span>
+                    )}
                   </div>
                 </div>
 
@@ -316,6 +366,9 @@ const AddCustomerForm = () => {
                       value={formData.birthPlace}
                       onChange={handleChangeTenant}
                     />
+                    {errors.birthPlace && (
+                      <span className="error-message">{errors.birthPlace}</span>
+                    )}
                   </div>
 
                   <div className="c-form-group inline-radio">
@@ -340,6 +393,9 @@ const AddCustomerForm = () => {
                       />{" "}
                       Female
                     </label>
+                    {errors.sex && (
+                      <span className="error-message">{errors.sex}</span>
+                    )}
                   </div>
                 </div>
 
@@ -352,6 +408,9 @@ const AddCustomerForm = () => {
                       value={formData.CIDNumber}
                       onChange={handleChangeTenant}
                     />
+                    {errors.CIDNumber && (
+                      <span className="error-message">{errors.CIDNumber}</span>
+                    )}
                   </div>
 
                   <div className="c-form-group">
@@ -362,6 +421,9 @@ const AddCustomerForm = () => {
                       value={formData.email}
                       onChange={handleChangeTenant}
                     />
+                    {errors.email && (
+                      <span className="error-message">{errors.email}</span>
+                    )}
                   </div>
                 </div>
 
@@ -384,6 +446,9 @@ const AddCustomerForm = () => {
                       value={formData.phone1}
                       onChange={handleChangeTenant}
                     />
+                    {errors.phone1 && (
+                      <span className="error-message">{errors.phone1}</span>
+                    )}
                   </div>
                 </div>
 
@@ -488,6 +553,7 @@ const AddCustomerForm = () => {
                 </div>
               </form>
             )}
+
             {activeTab === "contract" && (
               <form className="c-form-container">
                 <div className="c-form-row">
@@ -500,6 +566,9 @@ const AddCustomerForm = () => {
                       onChange={handleChangeContract}
                       readOnly={!!contractId}
                     />
+                    {errors.startDate && (
+                      <span className="error-message">{errors.startDate}</span>
+                    )}
                   </div>
 
                   <div className="c-form-group">
@@ -511,6 +580,9 @@ const AddCustomerForm = () => {
                       onChange={handleChangeContract}
                       readOnly={!!contractId}
                     />
+                    {errors.endDate && (
+                      <span className="error-message">{errors.endDate}</span>
+                    )}
                   </div>
                 </div>
 
@@ -534,6 +606,9 @@ const AddCustomerForm = () => {
                       onChange={handleChangeContract}
                       readOnly={!!contractId}
                     />
+                    {errors.deposit && (
+                      <span className="error-message">{errors.deposit}</span>
+                    )}
                   </div>
                 </div>
 
@@ -547,8 +622,6 @@ const AddCustomerForm = () => {
                       disabled={!!contractId}
                     >
                       <option value="1">1 month</option>
-                      <option value="2">2 months</option>
-                      <option value="3">3 months</option>
                     </select>
                   </div>
                 </div>
@@ -588,7 +661,6 @@ const AddCustomerForm = () => {
             )}
 
             {activeTab === "service" && <p>[Service] Implementing...</p>}
-            {activeTab === "member" && <p>[Member] Implementing...</p>}
           </div>
         </div>
       </div>

@@ -23,3 +23,25 @@
     }
   }
 }
+.contract-table {
+  width: 95%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  box-sizing: border-box;
+  margin-left: 7px;
+
+  th,
+  td {
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+  }
+
+  th {
+    background-color: #f0f4f8;
+  }
+
+  tr:hover {
+    background-color: #f9f9f9;
+  }
+}

@@ -4,11 +4,11 @@ const roomSchema = new mongoose.Schema(
   {
     roomNumber: { type: String, required: true },
     price: { type: Number, required: true },
-    length: { type: Number },
-    width: { type: Number },
-    maxPeople: { type: Number, required: true },
-    area: { type: Number, required: true },
-    numberBedroom: { type: Number, required: true },
+    length: { type: Number, min: 0 },
+    width: { type: Number, min: 0 },
+    maxPeople: { type: Number, required: true, min: 1 },
+    area: { type: Number, required: true, min: 0 },
+    numberBedroom: { type: Number, required: true, min: 1 },
     allowMale: { type: Boolean },
     allowFemale: { type: Boolean },
     landlordID: {
@@ -21,7 +21,6 @@ const roomSchema = new mongoose.Schema(
       default: "available",
       enum: ["available", "rented", "disabled"],
     },
-
     address: { type: String, required: true },
     description: { type: String },
     image: { type: String },
@@ -30,6 +29,7 @@ const roomSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+roomSchema.index({ roomNumber: 1, address: 1 }, { unique: true });
 
 const Room = mongoose.model("Room", roomSchema);
 export default Room;

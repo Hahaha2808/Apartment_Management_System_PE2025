@@ -98,14 +98,16 @@
 
         .table-wrapper {
           flex: 1;
-          overflow-x: auto;
+          max-height: 420px;
           overflow-y: auto;
+          box-sizing: border-box;
         }
 
         .customer-table {
           width: 100%;
-          //min-width: 500px;
+          min-width: 600px;
           border-collapse: collapse;
+          box-sizing: border-box;
 
           th,
           td {

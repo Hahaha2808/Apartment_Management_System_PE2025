@@ -60,6 +60,12 @@ export const addRoom = async (req, res) => {
       room: newRoom,
     });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        error: "Room with this number and address already exists.",
+      });
+    }
     console.error("Error while adding room", error);
     res.status(500).json({
       success: false,

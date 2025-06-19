@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import "../styling/components/dateField.scss";
@@ -14,11 +14,12 @@ function DateField({ selectedDate, setSelectedDate, title, mode = "month" }) {
       <label>{title ?? "Date"}</label>
       <DatePicker
         selected={selectedDate}
-        onChange={(date) => setSelectedDate(date)}
+        onChange={handleDateChange}
         dateFormat={isMonthMode ? "MM/yyyy" : "dd/MM/yyyy"}
         showMonthYearPicker={isMonthMode}
         placeholderText={isMonthMode ? "Select month and year" : "Select date"}
         className="date-input"
+        maxDate={new Date()}
       />
     </div>
   );
