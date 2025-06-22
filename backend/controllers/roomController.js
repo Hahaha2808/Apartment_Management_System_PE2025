@@ -281,3 +281,47 @@ export const getRoomStatusSummary = async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 };
+
+export const getAvailableRoomsInRange = async (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const landlordID = req.user.id;
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({ message: "Missing date range" });
+    }
+
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    // Step 1: Lấy toàn bộ phòng của landlord (loại bỏ phòng disabled)
+    const rooms = await Room.find({
+      landlordID,
+      status: { $ne: "disabled" },
+    }).select("roomNumber address area numberBedroom description price");
+
+    const roomIds = rooms.map((r) => r._id);
+
+    // Step 2: Tìm hợp đồng active có ngày chồng lấn
+    const conflictingContracts = await Contract.find({
+      roomId: { $in: roomIds },
+      status: "active",
+      startDate: { $lte: end },
+      endDate: { $gte: start },
+    });
+
+    const conflictingRoomIds = conflictingContracts.map((c) =>
+      c.roomId.toString()
+    );
+
+    // Step 3: Lọc bỏ phòng bị chồng lấn
+    const availableRooms = rooms.filter(
+      (room) => !conflictingRoomIds.includes(room._id.toString())
+    );
+
+    res.json(availableRooms);
+  } catch (err) {
+    console.error("❌ Error fetching available rooms:", err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};

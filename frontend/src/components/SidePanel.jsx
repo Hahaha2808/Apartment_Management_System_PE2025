@@ -9,10 +9,7 @@ import {
   IoCube,
   IoFlash,
   IoWater,
-  IoHammer,
-  IoCalculator,
   IoCash,
-  IoRepeat,
   IoBriefcase,
   IoPerson,
   IoLogOut,
@@ -88,6 +85,13 @@ function SidePanel({ selected }) {
         >
           <IoCash className="icon" />
           <span>Payment</span>
+        </Link>
+        <Link
+          to="/booking-planner"
+          className={selected === "booking" ? "link active" : "link"}
+        >
+          <IoBriefcase className="icon" />
+          <span>Booking Planner</span>
         </Link>
         <div
           className="link"

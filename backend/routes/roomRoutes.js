@@ -11,6 +11,7 @@ import {
   updateRoom,
   updateRoomStatus,
   getRoomStatusSummary,
+  getAvailableRoomsInRange,
 } from "../controllers/roomController.js";
 
 const roomRoutes = express.Router();
@@ -23,6 +24,7 @@ roomRoutes.post(
   upload.single("image"),
   addRoom
 );
+
 roomRoutes.get(
   "/status-summary",
   (req, res, next) => {
@@ -32,6 +34,12 @@ roomRoutes.get(
   authenticateToken,
   authorizeLandlord,
   getRoomStatusSummary
+);
+roomRoutes.get(
+  "/available",
+  authenticateToken,
+  authorizeLandlord,
+  getAvailableRoomsInRange
 );
 roomRoutes.get("/:id", authenticateToken, authorizeLandlord, getRoomById);
 roomRoutes.put(
