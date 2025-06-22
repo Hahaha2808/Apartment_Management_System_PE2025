@@ -20,6 +20,12 @@ contractRoutes.post(
   authorizeLandlord,
   createContract
 );
+contractRoutes.get(
+  "/expiring",
+  authenticateToken,
+  authorizeLandlord,
+  getExpiringContracts
+);
 contractRoutes.get("/", authenticateToken, authorizeLandlord, getAllContracts);
 contractRoutes.get(
   "/customers",
@@ -33,12 +39,7 @@ contractRoutes.get(
   authorizeLandlord,
   getContractById
 );
-contractRoutes.get(
-  "/expiring",
-  authenticateToken,
-  authorizeLandlord,
-  getExpiringContracts
-);
+
 contractRoutes.put(
   "/:id",
   authenticateToken,

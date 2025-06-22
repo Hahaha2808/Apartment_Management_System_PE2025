@@ -8,12 +8,12 @@
   .home-content {
     width: 100%;
     height: 100%;
-    padding-top: 60px;
+    padding-top: 20px;
     padding-left: 15px;
     padding-right: 15px;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    grid-template-rows: repeat(2, 40vh);
+    grid-template-rows: repeat(2, 350px);
     column-gap: 15px;
     row-gap: 15px;
 
@@ -21,27 +21,5 @@
       grid-template-columns: 1fr;
       grid-template-rows: auto;
     }
-  }
-}
-.contract-table {
-  width: 95%;
-  border-collapse: collapse;
-  margin-top: 10px;
-  box-sizing: border-box;
-  margin-left: 7px;
-
-  th,
-  td {
-    padding: 8px;
-    border-bottom: 1px solid #ddd;
-    text-align: center;
-  }
-
-  th {
-    background-color: #f0f4f8;
-  }
-
-  tr:hover {
-    background-color: #f9f9f9;
   }
 }

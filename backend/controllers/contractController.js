@@ -96,6 +96,12 @@ export const updateContract = async (req, res) => {
       return res.status(404).json({ message: "Contract not found." });
     }
 
+    if (req.body.status === "terminated") {
+      const today = new Date();
+      updatedContract.endDate = today;
+      await updatedContract.save();
+    }
+
     if (req.body.status) {
       const stillActive = await Contract.findOne({
         roomId: updatedContract.roomId,
@@ -175,32 +181,37 @@ export const getExpiringContracts = async (req, res) => {
     const roomMap = new Map();
     rooms.forEach((r) => roomMap.set(r._id.toString(), r));
     const roomIds = rooms.map((r) => r._id);
-
-    console.log("📌 Rooms found:", rooms.length);
-    console.log("📌 Room IDs:", roomIds);
-
     const contracts = await Contract.find({
       roomId: { $in: roomIds },
       status: "active",
-      endDate: { $gte: today, $lte: sixtyDaysLater },
-    }).populate("tenantId");
-
-    console.log("📌 Contracts found:", contracts.length);
+      endDate: {
+        $gte: today,
+        $lte: sixtyDaysLater,
+      },
+    })
+      .populate("tenantId")
+      .populate("roomId");
 
     const result = contracts.map((c) => {
-      const room = roomMap.get(c.roomId.toString());
+      const room = c.roomId;
+      const tenant = c.tenantId;
+
+      if (!room || typeof room !== "object") {
+        console.warn("Missing or invalid room in contract:", c._id);
+      }
+
       return {
-        house: room?.address || "N/A",
+        house: room?.address || "Room Not Found",
         room: room?.roomNumber || "N/A",
-        tenantName: c.tenantId?.fullname || "N/A",
+        tenantName: tenant?.fullname || "N/A",
         endDate: c.endDate,
-        rent: c.monthlyFee || 0,
       };
     });
 
     res.json(result);
   } catch (err) {
-    console.error("❌ Error fetching expiring contracts:", err); // THÊM LOG CHI TIẾT
+    console.error("❌ Error fetching expiring contracts:", err);
+    console.error("❌ STACK TRACE:", err.stack);
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
