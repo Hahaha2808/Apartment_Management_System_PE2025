@@ -17,6 +17,7 @@ import Water from "./pages/Water.jsx";
 import Welcome from "./pages/Welcome.jsx";
 import Customer from "./pages/Customer.jsx";
 import Payments from "./pages/Payment.jsx";
+import BookingPlanner from "./pages/BookingPlanner.jsx";
 const router = createBrowserRouter([
   {
     path: "/",
@@ -63,6 +64,7 @@ const router = createBrowserRouter([
     path: "/payment",
     element: <Payments />,
   },
+  { path: "/booking-planner", element: <BookingPlanner /> },
 ]);
 
 createRoot(document.getElementById("root")).render(
