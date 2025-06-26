@@ -239,3 +239,58 @@ export const deletePayment = async (req, res) => {
       .json({ message: "Error deleting payment", error: err.message });
   }
 };
+
+export const collectPayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { amount, date } = req.body;
+    const landlordId = req.user.id;
+
+    /*
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ message: "Amount must be greater than 0." });
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+    if (date > today) {
+      return res.status(400).json({ message: "Payment date cannot be in the future." });
+    }
+    */
+    const payment = await Payment.findById(id);
+    if (!payment) {
+      return res.status(404).json({ message: "Payment not found." });
+    }
+
+    const contract = await Contract.findById(payment.contract_id);
+    const room = await Room.findById(payment.room_id);
+
+    if (!contract || !room || room.landlordID.toString() !== landlordId) {
+      return res.status(403).json({ message: "Unauthorized access." });
+    }
+
+    const newAmountPaid = payment.amount_paid + amount;
+    const newRemaining = Math.max(payment.total_amount - newAmountPaid, 0);
+
+    let newStatus = "unpaid";
+    if (newAmountPaid === 0) newStatus = "unpaid";
+    else if (newAmountPaid < payment.total_amount) newStatus = "partial";
+    else newStatus = "paid";
+
+    payment.amount_paid = newAmountPaid;
+    payment.remaining = newRemaining;
+    payment.status = newStatus;
+    payment.paid_at = new Date(date);
+
+    await payment.save();
+
+    res.status(200).json({
+      message: "Payment collected successfully.",
+      updatedPayment: payment,
+    });
+  } catch (err) {
+    console.error("❌ Error in collectPayment:", err);
+    res
+      .status(500)
+      .json({ message: "Failed to collect payment", error: err.message });
+  }
+};

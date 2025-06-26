@@ -18,7 +18,7 @@ const contractSchema = new mongoose.Schema(
     deposit: { type: Number, required: true },
     payPer: {
       type: Number,
-      enum: [1, 2, 3],
+      enum: [1],
       default: 1,
       required: true,
     },

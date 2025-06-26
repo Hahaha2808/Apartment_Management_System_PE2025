@@ -5,6 +5,7 @@ import axios from "axios";
 import "../styling/payment.scss";
 import { useNavigate } from "react-router-dom";
 import PopupInvoice from "../components/BillPopup";
+import CollectPaymentForm from "../components/CollectPaymentForm";
 import {
   FaEye,
   FaMoneyBillWave,
@@ -24,6 +25,8 @@ function Payments() {
   const [allPayments, setAllPayments] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
   const [viewingPayment, setViewingPayment] = useState(null);
+  const [showCollectForm, setShowCollectForm] = useState(false);
+  const [collectingPayment, setCollectingPayment] = useState(null);
   const navigate = useNavigate();
   useEffect(() => {
     const now = new Date();
@@ -250,6 +253,38 @@ function Payments() {
       console.error("❌ Error loading invoice:", err);
     }
   };
+  const handleSaveCollection = async ({ paymentId, date, amount }) => {
+    try {
+      const token = localStorage.getItem("authToken");
+
+      await axios.post(
+        `http://localhost:5000/api/payments/${paymentId}/collect`,
+        { date, amount },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      alert("✅ Payment collected successfully!");
+      setShowCollectForm(false);
+      setCollectingPayment(null);
+
+      setData((prev) =>
+        prev.map((p) =>
+          p._id === paymentId
+            ? {
+                ...p,
+                paid: p.paid + amount,
+                remaining: Math.max(p.remaining - amount, 0),
+              }
+            : p
+        )
+      );
+    } catch (err) {
+      console.error("Collection failed:", err);
+      alert("❌ Failed to collect payment.");
+    }
+  };
 
   return (
     <div className="payment-container">
@@ -325,7 +360,13 @@ function Payments() {
                         >
                           <FaEye className="blue-icon" />
                         </button>
-                        <button className="gray-btn">
+                        <button
+                          className="gray-btn"
+                          onClick={() => {
+                            setCollectingPayment(entry);
+                            setShowCollectForm(true);
+                          }}
+                        >
                           <FaMoneyBillWave className="green-icon" />
                         </button>
                         <button
@@ -361,6 +402,16 @@ function Payments() {
             <PopupInvoice
               payment={viewingPayment}
               onClose={() => setViewingPayment(null)}
+            />
+          )}
+          {showCollectForm && collectingPayment && (
+            <CollectPaymentForm
+              payment={collectingPayment}
+              onClose={() => {
+                setShowCollectForm(false);
+                setCollectingPayment(null);
+              }}
+              onSave={handleSaveCollection}
             />
           )}
         </div>
