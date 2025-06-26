@@ -37,32 +37,90 @@ function PopupInvoice({ payment, onClose }) {
         </p>
 
         <hr />
-        <ul>
-          <li>1) Rent: {formatCurrency(payment.rent_amount)} VND</li>
-          <li>
-            2) Electric: {payment.electric?.consumed || 0} kWh ×{" "}
-            {formatCurrency(payment.electric?.unit_price)} ={" "}
-            {formatCurrency(payment.electric?.total)} VND
-          </li>
-          <li>
-            3) Water: {payment.water?.consumed || 0} m³ ×{" "}
-            {formatCurrency(payment.water?.unit_price)} ={" "}
-            {formatCurrency(payment.water?.total)} VND
-          </li>
+        <div className="invoice-services">
+          <div className="invoice-row">
+            <div className="item">
+              <span className="label">1) Rent:</span>
+              <span className="value">
+                {formatCurrency(payment.rent_amount)} VND
+              </span>
+            </div>
+          </div>
+
+          <div className="invoice-row">
+            <div className="item">
+              <span className="label">2) Electric:</span>
+              <span className="value">
+                {formatCurrency(payment.electric?.total)} VND
+              </span>
+            </div>
+          </div>
+
+          <div className="invoice-row">
+            <div className="item">
+              <span className="label">3) Water:</span>
+              <span className="value">
+                {formatCurrency(payment.water?.total)} VND
+              </span>
+            </div>
+          </div>
+
           {payment.other_services?.map((s, i) => (
-            <li key={i}>
-              {i + 4}) {s.service_name}: {formatCurrency(s.unit_price)} VND
-            </li>
+            <div className="invoice-row" key={i}>
+              <div className="item">
+                <span className="label">
+                  {i + 4}) {s.service_name}:
+                </span>
+                <span className="value">
+                  {formatCurrency(s.unit_price)} VND
+                </span>
+              </div>
+            </div>
           ))}
-        </ul>
+        </div>
 
         <hr />
-        <p>
-          <strong>Total:</strong> {formatCurrency(payment.total_amount)} VND
-        </p>
-        <p>
-          <strong>Invoice Date:</strong> {formatDate(payment.invoice_date)}
-        </p>
+        <div className="invoice-row">
+          <div className="item">
+            <span className="label">Invoice Date:</span>
+            <span className="value">{formatDate(payment.invoice_date)}</span>
+          </div>
+          <div className="item">
+            <span className="label">Total:</span>
+            <span className="value-x">
+              {formatCurrency(payment.total_amount)} VND
+            </span>
+          </div>
+        </div>
+
+        <div className="invoice-row">
+          <div className="item">
+            <span className="label">Paid At:</span>
+            <span className="value">{formatDate(payment.paid_at)}</span>
+          </div>
+          <div className="item">
+            <span className="label">Amount Paid:</span>
+            <span className="value">
+              {formatCurrency(payment.amount_paid)} VND
+            </span>
+          </div>
+        </div>
+
+        <div className="invoice-row">
+          <div className="item" style={{ flex: 1 }}></div>
+          <div className="item" style={{ maxWidth: "43%" }}>
+            <span className="label">Remaining:</span>
+            <span
+              className="value"
+              style={{
+                color: payment.remaining === 0 ? "#27ae60" : "#e67e22",
+                fontWeight: "bold",
+              }}
+            >
+              {formatCurrency(payment.remaining)} VND
+            </span>
+          </div>
+        </div>
 
         <div className="popup-actions">
           <button className="green-btn">Download Image</button>

@@ -4,6 +4,7 @@ import {
   getPayments,
   deletePayment,
   getPaymentById,
+  collectPayment,
 } from "../controllers/paymentController.js";
 import {
   authenticateToken,
@@ -21,6 +22,12 @@ paymentRoutes.post(
   createPayment
 );
 
+paymentRoutes.post(
+  "/:id/collect",
+  authenticateToken,
+  authorizeLandlord,
+  collectPayment
+);
 paymentRoutes.delete(
   "/:id",
   authenticateToken,
