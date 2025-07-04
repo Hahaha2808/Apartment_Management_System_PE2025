@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "../styling/components/AddCustomerForm.scss";
+import SelectableServiceTable from "./SelectServiceTable";
 import SidePanel from "../components/SidePanel";
 import axios from "axios";
 import { differenceInYears, addMonths, isBefore } from "date-fns";
@@ -10,6 +11,9 @@ const AddCustomerForm = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("information");
   const [tenantId, setTenantId] = useState(null);
+  const [services, setServices] = useState([]);
+  const [selectedServiceIds, setSelectedServiceIds] = useState([]);
+  const [serviceReadOnly, setServiceReadOnly] = useState(false);
   const [formData, setFormData] = useState({
     fullname: "",
     birthday: "",
@@ -103,6 +107,13 @@ const AddCustomerForm = () => {
     setContractData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleToggleService = (id) => {
+    if (serviceReadOnly) return;
+    setSelectedServiceIds((prev) =>
+      prev.includes(id) ? prev.filter((sId) => sId !== id) : [...prev, id]
+    );
+  };
+
   const handleSaveTenant = async (e) => {
     e.preventDefault();
     if (!validateTenant()) return;
@@ -135,12 +146,23 @@ const AddCustomerForm = () => {
     if (!validateContract()) return;
     if (!tenantId) return alert("Please save tenant first.");
     try {
+      console.log("🌟 Sending serviceIds:", selectedServiceIds);
+
       const token = localStorage.getItem("authToken");
       const response = await axios.post(
         "http://localhost:5000/api/contracts/add",
-        { roomId, tenantId, ...contractData, status: "active" },
+        {
+          roomId,
+          tenantId,
+          ...contractData,
+          serviceIds: selectedServiceIds,
+          status: "active",
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      console.log("✅ Create contract response:", response.data);
+
       if (response.data.success) {
         alert("Contract saved successfully!");
         navigate("/rooms");
@@ -157,7 +179,26 @@ const AddCustomerForm = () => {
   };
 
   useEffect(() => {
-    const fetchData = async () => {
+    const loadActiveServices = async () => {
+      try {
+        const token = localStorage.getItem("authToken");
+        if (!token) return;
+
+        const { data } = await axios.get("http://localhost:5000/api/services", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        setServices((data.data || []).filter((s) => s.status === "active"));
+      } catch (err) {
+        console.error("Error loading active services:", err);
+      }
+    };
+
+    loadActiveServices();
+  }, []);
+
+  useEffect(() => {
+    const loadData = async () => {
       const token = localStorage.getItem("authToken");
       if (!token) {
         alert("You are not logged in or token missing!");
@@ -165,75 +206,74 @@ const AddCustomerForm = () => {
         return;
       }
 
-      try {
-        if (contractId) {
-          // Fetch contract (Từ tenantId fetch được tenant Information)
-          const res = await axios.get(
-            `http://localhost:5000/api/contracts/${contractId}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
+      if (contractId) {
+        setServiceReadOnly(true);
 
-          const contract = res.data;
+        const { data: contract } = await axios.get(
+          `http://localhost:5000/api/contracts/${contractId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
 
-          // Gán dữ liệu hợp đồng
-          setContractData({
-            startDate: contract.startDate?.split("T")[0],
-            endDate: contract.endDate?.split("T")[0],
-            monthlyFee: contract.monthlyFee,
-            deposit: contract.deposit,
-            payPer: contract.payPer,
+        // 📌 Fill contractData
+        setContractData({
+          startDate: contract.startDate?.split("T")[0],
+          endDate: contract.endDate?.split("T")[0],
+          monthlyFee: contract.monthlyFee,
+          deposit: contract.deposit,
+          payPer: contract.payPer,
+        });
+
+        // 📌 Fill tenantData
+        if (contract.tenantId) {
+          const t = contract.tenantId;
+          setFormData({
+            fullname: t.fullname || "",
+            birthday: t.birthday?.split("T")[0] || "",
+            CIDNumber: t.CIDNumber || "",
+            sex: t.sex || "",
+            phone1: t.phone1 || "",
+            phone2: t.phone2 || "",
+            email: t.email || "",
+            birthPlace: t.birthPlace || "",
+            CIDIssuedDate: t.CIDIssuedDate?.split("T")[0] || "",
+            CIDIssuedPlace: t.CIDIssuedPlace || "",
+            province: t.province || "",
+            vehicleNumber: t.vehicleNumber || "",
+            permanentAddress: t.permanentAddress || "",
+            note: t.note || "",
           });
-
-          // Gán dữ liệu tenant
-          if (contract.tenantId) {
-            const t = contract.tenantId;
-            setFormData({
-              fullname: t.fullname || "",
-              birthday: t.birthday?.split("T")[0] || "",
-              CIDNumber: t.CIDNumber || "",
-              sex: t.sex || "",
-              phone1: t.phone1 || "",
-              phone2: t.phone2 || "",
-              email: t.email || "",
-              birthPlace: t.birthPlace || "",
-              CIDIssuedDate: t.CIDIssuedDate?.split("T")[0] || "",
-              CIDIssuedPlace: t.CIDIssuedPlace || "",
-              province: t.province || "",
-              vehicleNumber: t.vehicleNumber || "",
-              permanentAddress: t.permanentAddress || "",
-              note: t.note || "",
-            });
-          }
-        } else {
-          //get price of room
-          const res = await axios.get(
-            `http://localhost:5000/api/rooms/${roomId}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-
-          if (res.data.price) {
-            setContractData((prev) => ({
-              ...prev,
-              monthlyFee: res.data.price,
-            }));
-          }
         }
-      } catch (err) {
-        console.error("❌ Error loading data:", err);
+
+        setServices(contract.serviceIds || []);
+        setSelectedServiceIds(
+          (contract.serviceIds || []).map(
+            (s) => s._id?.toString() || s.serviceId?.toString()
+          )
+        );
+      } else if (roomId) {
+        setServiceReadOnly(false);
+        const serviceRes = await axios.get(
+          `http://localhost:5000/api/services`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const activeServices = serviceRes.data.data?.filter(
+          (s) => s.status === "active"
+        );
+        setServices(activeServices || []);
+        setSelectedServiceIds([]);
+
+        // Load room price
+        const { data: room } = await axios.get(
+          `http://localhost:5000/api/rooms/${roomId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (room.price) {
+          setContractData((prev) => ({ ...prev, monthlyFee: room.price }));
+        }
       }
     };
 
-    if (roomId) {
-      fetchData();
-    }
+    if (roomId) loadData();
   }, [roomId, contractId]);
 
   const handleEndContract = async () => {
@@ -660,7 +700,16 @@ const AddCustomerForm = () => {
               </form>
             )}
 
-            {activeTab === "service" && <p>[Service] Implementing...</p>}
+            {activeTab === "service" && (
+              <div className="c-form-container">
+                <SelectableServiceTable
+                  services={services}
+                  selectedIds={selectedServiceIds}
+                  onToggle={handleToggleService}
+                  readOnly={serviceReadOnly}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>

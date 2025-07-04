@@ -30,6 +30,11 @@ function BookingPlanner() {
       return;
     }
 
+    if (new Date(startDate) > new Date(endDate)) {
+      alert("Start date cannot be after end date.");
+      return;
+    }
+
     const token = localStorage.getItem("authToken");
     if (!token) return;
 

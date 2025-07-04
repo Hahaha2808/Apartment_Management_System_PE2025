@@ -23,13 +23,48 @@ function SignUp() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    // Validation
+    if (
+      !fullname.trim() ||
+      !username.trim() ||
+      !email.trim() ||
+      !password.trim() ||
+      !phone_number.trim()
+    ) {
+      alert("All fields are required.");
+      return;
+    }
+
+    // Email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      alert("Invalid email format.");
+      return;
+    }
+
+    // Password length
+    if (password.length < 6) {
+      alert("Password must be at least 6 characters.");
+      return;
+    }
+
+    // Phone number format (basic)
+    const phoneRegex = /^[0-9]{8,15}$/;
+    if (!phoneRegex.test(phone_number)) {
+      alert("Invalid phone number. Must be 8-15 digits.");
+      return;
+    }
+
+    // Data to send
+    const formData = { fullname, username, email, password, phone_number };
     console.log("Sending data:", formData);
+
     axios
       .post("http://localhost:5000/api/users/register", formData)
       .then((response) => {
         console.log(response.data);
         if (response.status === 200) {
-          console.log("Registration successful");
           alert("Registration successful");
           navigate("/login");
         }
@@ -38,7 +73,6 @@ function SignUp() {
         console.error("There was an error!", error);
         alert("Registration failed");
       });
-    console.log("setStatus type:", typeof setStatus);
   };
   const handleRedirectToLogin = () => {
     navigate("/login");
@@ -56,46 +90,42 @@ function SignUp() {
             <input
               type="text"
               name="fullname"
-              placeholder="Your fullname"
+              placeholder="Your fullname*"
               required
               onChange={(e) => setFullname(e.target.value)}
             />
             <input
               type="text"
               name="username"
-              placeholder="Username"
+              placeholder="Username*"
               required
               onChange={(e) => setUsername(e.target.value)}
             />
             <input
               type="email"
               name="email"
-              placeholder="Email"
+              placeholder="Email*"
               required
               onChange={(e) => setEmail(e.target.value)}
             />
             <input
               type="password"
               name="password"
-              placeholder="Password"
+              placeholder="Password*"
               required
               onChange={(e) => setPassword(e.target.value)}
             />
             <input
               type="text"
               name="phone_number"
-              placeholder="Telephone number"
+              placeholder="Telephone number*"
               required
               onChange={(e) => setPhoneNumber(e.target.value)}
             />
           </div>
           <div className="divider"></div>
           <div className="submit-container">
-            <button
-              type="submit"
-              className="submit-button"
-              onClick={handleRedirectToLogin}
-            >
+            <button type="submit" className="submit-button">
               Register
             </button>
             <span className="redirect-link" onClick={handleRedirectToLogin}>

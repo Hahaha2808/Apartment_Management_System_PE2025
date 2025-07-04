@@ -114,12 +114,10 @@ function Electric() {
     const currentYear = now.getFullYear();
 
     if (month === currentMonth && year === currentYear) {
-      // ✅ Tháng hiện tại → gọi lại fetchCurrentMonthData
       fetchCurrentMonthData();
       return;
     }
 
-    // ❗ Tháng khác → gọi API /history
     axios
       .get(
         `http://localhost:5000/api/electric-meters/history?month=${
@@ -158,6 +156,14 @@ function Electric() {
             <h1 className="service-title">Electricity Meter</h1>
           </div>
           <div className="break"></div>
+          <p className="service-description">
+            Note: You can update the electricity reading multiple times during
+            the month (from the first day to the last day). When creating a
+            payment in the Payment page, the most recent reading will be
+            automatically used for calculation. At the end of the month, you
+            will only be able to view the readings — editing will no longer be
+            possible.
+          </p>
           <div className="electric-lower">
             <div className="filter-section">
               <DateField

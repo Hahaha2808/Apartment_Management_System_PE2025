@@ -93,18 +93,20 @@ function PopupInvoice({ payment, onClose }) {
           </div>
         </div>
 
-        <div className="invoice-row">
-          <div className="item">
-            <span className="label">Paid At:</span>
-            <span className="value">{formatDate(payment.paid_at)}</span>
+        {payment.amount_paid > 0 && (
+          <div className="invoice-row">
+            <div className="item">
+              <span className="label">Paid At:</span>
+              <span className="value">{formatDate(payment.paid_at)}</span>
+            </div>
+            <div className="item">
+              <span className="label">Amount Paid:</span>
+              <span className="value">
+                {formatCurrency(payment.amount_paid)} VND
+              </span>
+            </div>
           </div>
-          <div className="item">
-            <span className="label">Amount Paid:</span>
-            <span className="value">
-              {formatCurrency(payment.amount_paid)} VND
-            </span>
-          </div>
-        </div>
+        )}
 
         <div className="invoice-row">
           <div className="item" style={{ flex: 1 }}></div>

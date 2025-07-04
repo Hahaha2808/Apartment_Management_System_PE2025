@@ -141,6 +141,14 @@ function Water() {
             <h1 className="service-title">Water Meter</h1>
           </div>
           <div className="break"></div>
+          <p className="service-description">
+            Note: You can update the electricity reading multiple times during
+            the month (from the first day to the last day). When creating a
+            payment in the Payment page, the most recent reading will be
+            automatically used for calculation. At the end of the month, you
+            will only be able to view the readings — editing will no longer be
+            possible.
+          </p>
           <div className="water-lower">
             <div className="filter-section">
               <DateField

@@ -3,10 +3,20 @@ import Service from "../models/Service.model.js";
 import Contract from "../models/Contract.model.js";
 import cron from "node-cron";
 
+import mongoose from "mongoose";
+
 export const createContract = async (req, res) => {
   try {
-    const { roomId, tenantId, startDate, endDate, deposit, payPer, status } =
-      req.body;
+    const {
+      roomId,
+      tenantId,
+      startDate,
+      endDate,
+      deposit,
+      payPer,
+      status,
+      serviceIds,
+    } = req.body;
 
     if (!roomId || !tenantId || !startDate || !endDate || !deposit) {
       return res.status(400).json({ message: "Missing required fields." });
@@ -19,9 +29,6 @@ export const createContract = async (req, res) => {
     }
 
     const monthlyFee = room.price;
-    const landlordID = room.landlordID;
-    const services = await Service.find({ landlordID, status: "active" });
-    const serviceIds = services.map((s) => s._id);
 
     const newContract = new Contract({
       roomId,
@@ -32,19 +39,22 @@ export const createContract = async (req, res) => {
       deposit,
       payPer,
       status,
-      serviceIds,
+      serviceIds, // ✅ chỉ lưu ObjectId
     });
+
     await newContract.save();
+
     if (status === "active") {
       await Room.findByIdAndUpdate(roomId, { status: "rented" });
     }
 
     res.status(201).json({
       success: true,
-      message: "Contract created successfully with landlord's services.",
+      message: "Contract created successfully.",
       contract: newContract,
     });
   } catch (err) {
+    console.error("❌ Error in createContract:", err);
     res.status(500).json({ message: "Server error.", error: err.message });
   }
 };
@@ -65,13 +75,14 @@ export const getContractById = async (req, res) => {
   try {
     const contract = await Contract.findById(req.params.id)
       .populate("roomId")
-      .populate("tenantId");
+      .populate("tenantId")
+      .populate("serviceIds"); // Lấy đầy đủ dịch vụ
 
     if (!contract || contract.roomId.landlordID.toString() !== req.user.id) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
-    res.status(200).json(contract);
+    res.status(200).json(contract); // ✅ Không thêm gì nữa
   } catch (err) {
     res
       .status(500)
