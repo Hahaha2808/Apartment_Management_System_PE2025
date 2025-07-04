@@ -16,6 +16,10 @@ function CollectPaymentForm({ payment, onClose, onSave }) {
       alert("Payment date cannot be in the future.");
       return;
     }
+    if (amount > payment.remaining) {
+      alert(`Amount cannot exceed remaining balance of ${payment.remaining}.`);
+      return;
+    }
     onSave({ paymentId: payment._id, date, amount });
   };
 

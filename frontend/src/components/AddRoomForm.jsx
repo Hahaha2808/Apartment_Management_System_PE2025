@@ -64,7 +64,17 @@ const AddRoomForm = ({ onSuccess }) => {
   };
 
   const handleImageChange = (e) => {
-    setImage(e.target.files[0]);
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const allowedTypes = ["image/jpeg", "image/png"];
+    if (!allowedTypes.includes(file.type)) {
+      alert("Only PNG or JPEG images are allowed.");
+      e.target.value = "";
+      return;
+    }
+
+    setImage(file);
   };
 
   return (
