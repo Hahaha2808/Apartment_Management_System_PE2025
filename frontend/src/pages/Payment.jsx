@@ -192,7 +192,7 @@ function Payments() {
         endDate: end.toISOString(),
       };
 
-      const res = await axios.get("/api/payments", {
+      const res = await axios.get(`${API_BASE_URL}/api/payments`, {
         headers: { Authorization: `Bearer ${token}` },
         params,
       });
@@ -227,7 +227,7 @@ function Payments() {
     try {
       const token = localStorage.getItem("authToken");
 
-      await axios.delete(`/api/payments/${id}`, {
+      await axios.delete(`${API_BASE_URL}/api/payments/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
