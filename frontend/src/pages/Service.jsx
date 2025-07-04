@@ -5,7 +5,7 @@ import "../styling/service.scss";
 import SidePanel from "../components/SidePanel";
 import ServiceForm from "./ServiceForm";
 import axios from "axios";
-
+import { API_BASE_URL } from "../config";
 export default function Service() {
   const [services, setServices] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -17,7 +17,7 @@ export default function Service() {
   const fetchServices = async () => {
     try {
       const token = localStorage.getItem("authToken");
-      const response = await axios.get("http://localhost:5000/api/services", {
+      const response = await axios.get(`${API_BASE_URL}/api/services`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const filtered = (response.data.data || []).filter(
@@ -49,7 +49,7 @@ export default function Service() {
     try {
       const token = localStorage.getItem("authToken");
       await axios.post(
-        "http://localhost:5000/api/services/create-service",
+        `${API_BASE_URL}/api/services/create-service`,
         { ...data, status: "active" },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -64,7 +64,7 @@ export default function Service() {
     try {
       const token = localStorage.getItem("authToken");
       await axios.put(
-        `http://localhost:5000/api/services/update-service/${editingService._id}`,
+        `${API_BASE_URL}/api/services/update-service/${editingService._id}`,
         data,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -81,7 +81,7 @@ export default function Service() {
     try {
       const token = localStorage.getItem("authToken");
       await axios.put(
-        `http://localhost:5000/api/services/update-service/${id}`,
+        `${API_BASE_URL}/api/services/update-service/${id}`,
         { status: newStatus },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -100,7 +100,7 @@ export default function Service() {
     try {
       const token = localStorage.getItem("authToken");
       await axios.put(
-        `http://localhost:5000/api/services/update-service/${id}`,
+        `${API_BASE_URL}/api/services/update-service/${id}`,
         { status: "deleted" },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -114,7 +114,7 @@ export default function Service() {
     try {
       const token = localStorage.getItem("authToken");
       const response = await axios.get(
-        `http://localhost:5000/api/services/service/${id}`,
+        `${API_BASE_URL}/api/services/service/${id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setEditingService(response.data.data);

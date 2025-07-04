@@ -6,6 +6,7 @@ import axios from "axios";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { roomSchema } from "../../validations/roomSchema";
+import { API_BASE_URL } from "../config";
 
 const AddRoomForm = ({ onSuccess }) => {
   const [image, setImage] = useState(null);
@@ -48,7 +49,7 @@ const AddRoomForm = ({ onSuccess }) => {
         return;
       }
 
-      const res = await axios.post("http://localhost:5000/api/rooms", form, {
+      const res = await axios.post(`${API_BASE_URL}/api/rooms`, form, {
         headers: { Authorization: `Bearer ${token}` },
       });
 

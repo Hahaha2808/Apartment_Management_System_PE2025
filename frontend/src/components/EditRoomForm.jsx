@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import "../styling/components/AddRoomForm.scss";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { API_BASE_URL } from "../config";
 
 const EditRoomForm = ({ roomData, onSuccess }) => {
   const { id } = useParams();
@@ -39,7 +40,7 @@ const EditRoomForm = ({ roomData, onSuccess }) => {
     try {
       const token = localStorage.getItem("authToken");
       await axios.put(
-        `http://localhost:5000/api/rooms/${formData._id}`,
+        `${API_BASE_URL}/api/rooms/${formData._id}`,
         updatedData,
         {
           headers: {

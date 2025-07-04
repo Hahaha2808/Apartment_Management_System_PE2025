@@ -18,8 +18,7 @@ connectDB();
 const app = express();
 app.use(
   cors({
-    origin: "http://localhost:3000",
-    credentials: true,
+    origin: ["http://localhost:3000", "https://apmapp2025.web.app"],
   })
 );
 app.use(express.json());
