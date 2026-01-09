@@ -6,6 +6,7 @@ import DateField from "../components/DateField";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FaSave, FaSearch } from "react-icons/fa";
+import { API_BASE_URL } from "../config";
 
 function Water() {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -44,7 +45,7 @@ function Water() {
 
     try {
       await axios.post(
-        "http://localhost:5000/api/water-meters/add-new-meters",
+        `${API_BASE_URL}/api/water-meters/add-new-meters`,
         {
           contract_id: entry.contract_id,
           currentIndex: entry.new,
@@ -68,7 +69,7 @@ function Water() {
     const token = localStorage.getItem("authToken");
 
     axios
-      .get("http://localhost:5000/api/water-meters/index", {
+      .get(`${API_BASE_URL}/api/water-meters/index`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
@@ -111,7 +112,7 @@ function Water() {
 
     axios
       .get(
-        `http://localhost:5000/api/water-meters/history?month=${month}&year=${year}`,
+        `${API_BASE_URL}/api/water-meters/history?month=${month}&year=${year}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

@@ -8,7 +8,7 @@ import EditRoomForm from "../components/EditRoomForm";
 import "../styling/components/AddRoomForm.scss";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-
+import { API_BASE_URL } from "../config";
 const Room = () => {
   const [roomStatus, setRoomStatus] = useState("");
   const [roomNumber, setRoomNumber] = useState("");
@@ -38,7 +38,7 @@ const Room = () => {
 
     console.log("Token frontend:", token); // Debug token
     axios
-      .get("http://localhost:5000/api/rooms", {
+      .get(`${API_BASE_URL}/api/rooms`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -87,7 +87,7 @@ const Room = () => {
       if (address) queryParams.append("address", address);
 
       const response = await axios.get(
-        `http://localhost:5000/api/rooms?${queryParams.toString()}`,
+        `${API_BASE_URL}/api/rooms?${queryParams.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -123,7 +123,7 @@ const Room = () => {
     try {
       const token = localStorage.getItem("authToken");
       await axios.patch(
-        `http://localhost:5000/api/rooms/${roomId}/status`,
+        `${API_BASE_URL}/api/rooms/${roomId}/status`,
         { status: "disabled" },
         {
           headers: {
@@ -144,7 +144,7 @@ const Room = () => {
     try {
       const token = localStorage.getItem("authToken");
       await axios.patch(
-        `http://localhost:5000/api/rooms/${roomId}/status`,
+        `${API_BASE_URL}/api/rooms/${roomId}/status`,
         { status: "available" },
         {
           headers: {
@@ -241,7 +241,7 @@ const Room = () => {
                 <div className="room-image">
                   {room.image ? (
                     <img
-                      src={`http://localhost:5000/uploads/${room.image}`}
+                      src={`${API_BASE_URL}/uploads/${room.image}`}
                       alt={`Room ${room.roomNumber}`}
                     />
                   ) : (

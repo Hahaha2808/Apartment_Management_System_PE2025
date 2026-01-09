@@ -6,7 +6,7 @@ import DateField from "../components/DateField";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import "../styling/customer.scss";
-
+import { API_BASE_URL } from '../config';
 function Customer() {
   const [data, setData] = useState([]);
   const [selectedStartDate, setSelectedStartDate] = useState(null);
@@ -32,7 +32,7 @@ function Customer() {
           (selectedEndDate.getMonth() + 1);
       }
       const res = await axios.get(
-        "http://localhost:5000/api/contracts/customers",
+        `${API_BASE_URL}/api/contracts/customers`,
         {
           params,
           headers: {

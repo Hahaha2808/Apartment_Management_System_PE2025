@@ -7,6 +7,7 @@ import DateField from "../components/DateField";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { FaSave } from "react-icons/fa";
+import { API_BASE_URL } from '../config';
 
 function Electric() {
   const [selectedDate, setSelectedDate] = useState(null);
@@ -45,7 +46,7 @@ function Electric() {
 
     try {
       await axios.post(
-        "http://localhost:5000/api/electric-meters/add-new-meters",
+        `${API_BASE_URL}/api/electric-meters/add-new-meters`,
         {
           contract_id: entry.contract_id,
           currentIndex: entry.new,
@@ -68,7 +69,7 @@ function Electric() {
     const token = localStorage.getItem("authToken");
 
     axios
-      .get("http://localhost:5000/api/electric-meters/index", {
+      .get(`${API_BASE_URL}/api/electric-meters/index`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
@@ -120,7 +121,7 @@ function Electric() {
 
     axios
       .get(
-        `http://localhost:5000/api/electric-meters/history?month=${
+        `${API_BASE_URL}/api/electric-meters/history?month=${
           month + 1
         }&year=${year}`,
         {

@@ -6,6 +6,7 @@ import "../styling/payment.scss";
 import { useNavigate } from "react-router-dom";
 import PopupInvoice from "../components/BillPopup";
 import CollectPaymentForm from "../components/CollectPaymentForm";
+import { API_BASE_URL } from "../config";
 import {
   FaEye,
   FaMoneyBillWave,
@@ -62,13 +63,13 @@ function Payments() {
         };
 
         const [contractRes, roomRes, paymentRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/contracts", {
+          axios.get(`${API_BASE_URL}/api/contracts`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get("http://localhost:5000/api/rooms", {
+          axios.get(`${API_BASE_URL}/api/rooms`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          axios.get("http://localhost:5000/api/payments", {
+          axios.get(`${API_BASE_URL}/api/payments`, {
             headers: { Authorization: `Bearer ${token}` },
             params,
           }),
@@ -121,7 +122,7 @@ function Payments() {
       const formattedInvoiceDate = invoiceDate.toISOString();
 
       const res = await axios.post(
-        "http://localhost:5000/api/payments/calculate/single",
+        `${API_BASE_URL}/api/payments/calculate/single`,
         {
           roomId: selectedRoom,
           monthYear,
@@ -191,7 +192,7 @@ function Payments() {
         endDate: end.toISOString(),
       };
 
-      const res = await axios.get("http://localhost:5000/api/payments", {
+      const res = await axios.get(`${API_BASE_URL}/api/payments`, {
         headers: { Authorization: `Bearer ${token}` },
         params,
       });
@@ -226,7 +227,7 @@ function Payments() {
     try {
       const token = localStorage.getItem("authToken");
 
-      await axios.delete(`http://localhost:5000/api/payments/${id}`, {
+      await axios.delete(`${API_BASE_URL}/api/payments/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -240,12 +241,9 @@ function Payments() {
   const handleView = async (paymentId) => {
     try {
       const token = localStorage.getItem("authToken");
-      const res = await axios.get(
-        `http://localhost:5000/api/payments/${paymentId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await axios.get(`${API_BASE_URL}/api/payments/${paymentId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       setViewingPayment(res.data); // chứa đầy đủ dữ liệu
     } catch (err) {
@@ -258,7 +256,7 @@ function Payments() {
       const token = localStorage.getItem("authToken");
 
       await axios.post(
-        `http://localhost:5000/api/payments/${paymentId}/collect`,
+        `${API_BASE_URL}/api/payments/${paymentId}/collect`,
         { date, amount },
         {
           headers: { Authorization: `Bearer ${token}` },

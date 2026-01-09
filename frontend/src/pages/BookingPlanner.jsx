@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import SidePanel from "../components/SidePanel";
 import "../styling/bookingPlanner.scss";
-
+import { API_BASE_URL } from "../config";
 function BookingPlanner() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -40,7 +40,7 @@ function BookingPlanner() {
 
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/rooms/available", {
+      const res = await axios.get(`${API_BASE_URL}/api/rooms/available`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { startDate, endDate },
       });

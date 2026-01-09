@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styling/components/signin.scss";
-
+import { API_BASE_URL } from "../config";
 function SignIn() {
+  console.log("API_BASE_URL:", API_BASE_URL);
   const navigate = useNavigate();
 
   const [account, setAccount] = useState({
@@ -21,7 +22,7 @@ function SignIn() {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/api/users/signin",
+        `${API_BASE_URL}/api/users/signin`,
         account
       );
 

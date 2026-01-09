@@ -5,6 +5,7 @@ import SelectableServiceTable from "./SelectServiceTable";
 import SidePanel from "../components/SidePanel";
 import axios from "axios";
 import { differenceInYears, addMonths, isBefore } from "date-fns";
+import { API_BASE_URL } from "../config";
 
 const AddCustomerForm = () => {
   const { roomId, contractId } = useParams();
@@ -126,7 +127,7 @@ const AddCustomerForm = () => {
       }
 
       const response = await axios.post(
-        "http://localhost:5000/api/tenant/add",
+        `${API_BASE_URL}/api/tenant/add`,
         formData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -150,7 +151,7 @@ const AddCustomerForm = () => {
 
       const token = localStorage.getItem("authToken");
       const response = await axios.post(
-        "http://localhost:5000/api/contracts/add",
+        `${API_BASE_URL}/api/contracts/add`,
         {
           roomId,
           tenantId,
@@ -184,7 +185,7 @@ const AddCustomerForm = () => {
         const token = localStorage.getItem("authToken");
         if (!token) return;
 
-        const { data } = await axios.get("http://localhost:5000/api/services", {
+        const { data } = await axios.get(`${API_BASE_URL}/api/services`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
@@ -210,7 +211,7 @@ const AddCustomerForm = () => {
         setServiceReadOnly(true);
 
         const { data: contract } = await axios.get(
-          `http://localhost:5000/api/contracts/${contractId}`,
+          `${API_BASE_URL}/api/contracts/${contractId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
@@ -252,10 +253,9 @@ const AddCustomerForm = () => {
         );
       } else if (roomId) {
         setServiceReadOnly(false);
-        const serviceRes = await axios.get(
-          `http://localhost:5000/api/services`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const serviceRes = await axios.get(`${API_BASE_URL}/api/services`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         const activeServices = serviceRes.data.data?.filter(
           (s) => s.status === "active"
         );
@@ -264,7 +264,7 @@ const AddCustomerForm = () => {
 
         // Load room price
         const { data: room } = await axios.get(
-          `http://localhost:5000/api/rooms/${roomId}`,
+          `${API_BASE_URL}/api/rooms/${roomId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (room.price) {
@@ -290,7 +290,7 @@ const AddCustomerForm = () => {
         return;
       }
       const res = await axios.put(
-        `http://localhost:5000/api/contracts/${contractId}`,
+        `${API_BASE_URL}/api/contracts/${contractId}`,
         { status: "terminated" },
         {
           headers: {
@@ -318,7 +318,7 @@ const AddCustomerForm = () => {
       }
 
       const res = await axios.get(
-        `http://localhost:5000/api/contracts/${contractId}`,
+        `${API_BASE_URL}/api/contracts/${contractId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -331,7 +331,7 @@ const AddCustomerForm = () => {
       }
 
       const updateRes = await axios.put(
-        `http://localhost:5000/api/tenant/${tenantId}`,
+        `${API_BASE_URL}/api/tenant/${tenantId}`,
         formData,
         {
           headers: {

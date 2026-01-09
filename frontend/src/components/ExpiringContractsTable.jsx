@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { API_BASE_URL } from "../config";
 import "../styling/components/ExpiringContractsTable.scss";
 function ExpiringContractsTable() {
   const [expiringContracts, setExpiringContracts] = useState([]);
@@ -8,7 +9,7 @@ function ExpiringContractsTable() {
     const token = localStorage.getItem("authToken");
     console.log("🎯 Calling /contracts/expiring with token:", token);
     axios
-      .get("http://localhost:5000/api/contracts/expiring", {
+      .get(`${API_BASE_URL}/api/contracts/expiring`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {

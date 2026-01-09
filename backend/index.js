@@ -18,8 +18,7 @@ connectDB();
 const app = express();
 app.use(
   cors({
-    origin: "http://localhost:3000",
-    credentials: true,
+    origin: ["http://localhost:3000", "https://apmapp2025.web.app"],
   })
 );
 app.use(express.json());
@@ -34,6 +33,10 @@ app.use("/api/water-meters", waterRoutes);
 app.use("/api/electric-meters", electricRoutes);
 app.use("/api/payments", paymentRoutes);
 const PORT = process.env.PORT || 5000;
+
+app.get("/", (req, res) => {
+  res.send("Apartment Management API is running");
+});
 
 app.listen(PORT, () => {
   console.log(`✅ Server is running on port ${PORT}`);

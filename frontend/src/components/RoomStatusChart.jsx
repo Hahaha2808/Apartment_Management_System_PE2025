@@ -3,7 +3,7 @@ import axios from "axios";
 import { Pie } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip } from "chart.js";
 import "../styling/components/RoomStatusChart.scss";
-
+import { API_BASE_URL } from '../config';
 ChartJS.register(ArcElement, Tooltip);
 
 export default function RoomStatusChart() {
@@ -15,7 +15,7 @@ export default function RoomStatusChart() {
     if (!token) return;
 
     axios
-      .get("http://localhost:5000/api/rooms/status-summary", {
+      .get(`${API_BASE_URL}/api/rooms/status-summary`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then((res) => {
