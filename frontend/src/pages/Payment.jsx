@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
 import SidePanel from "../components/SidePanel";
 import CalculateForm from "../components/CalculateForm";
-import axios from "axios";
+import api, { isAuthHandledError } from "../utils/apiClient.js";
 import "../styling/payment.scss";
-import { useNavigate } from "react-router-dom";
 import PopupInvoice from "../components/BillPopup";
 import CollectPaymentForm from "../components/CollectPaymentForm";
 import {
@@ -27,7 +26,6 @@ function Payments() {
   const [viewingPayment, setViewingPayment] = useState(null);
   const [showCollectForm, setShowCollectForm] = useState(false);
   const [collectingPayment, setCollectingPayment] = useState(null);
-  const navigate = useNavigate();
   useEffect(() => {
     const now = new Date();
     setSelectedStartDate(new Date(now.getFullYear(), now.getMonth(), 1)); // ngày đầu tháng
@@ -39,11 +37,6 @@ function Payments() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem("authToken");
-        if (!token) {
-          alert("You must be logged in to access this page.");
-          navigate("/login");
-        }
         const today = new Date();
         const currentMonthStart = new Date(
           today.getFullYear(),
@@ -62,16 +55,9 @@ function Payments() {
         };
 
         const [contractRes, roomRes, paymentRes] = await Promise.all([
-          axios.get("http://localhost:5000/api/contracts", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get("http://localhost:5000/api/rooms", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          axios.get("http://localhost:5000/api/payments", {
-            headers: { Authorization: `Bearer ${token}` },
-            params,
-          }),
+          api.get("/contracts"),
+          api.get("/rooms"),
+          api.get("/payments", { params }),
         ]);
 
         const activeContracts = contractRes.data.filter(
@@ -102,7 +88,8 @@ function Payments() {
         setAllPayments(paymentData);
         setData(paymentData);
       } catch (err) {
-        console.error("Fetching failed:", err);
+        if (isAuthHandledError(err)) return;
+        alert(err.response?.data?.message || "Could not load payment data.");
       }
     };
 
@@ -115,20 +102,15 @@ function Payments() {
     selectedRoom,
   }) => {
     try {
-      const token = localStorage.getItem("authToken");
-
       const monthYear = billingMonth.toISOString().slice(0, 7);
       const formattedInvoiceDate = invoiceDate.toISOString();
 
-      const res = await axios.post(
-        "http://localhost:5000/api/payments/calculate/single",
+      const res = await api.post(
+        "/payments/calculate/single",
         {
           roomId: selectedRoom,
           monthYear,
           invoiceDate: formattedInvoiceDate,
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
@@ -150,6 +132,7 @@ function Payments() {
 
       setShowPopup(false);
     } catch (err) {
+      if (isAuthHandledError(err)) return;
       const msg = err?.response?.data?.message || "Error calculating payment";
 
       if (err.response?.status === 409) {
@@ -164,12 +147,9 @@ function Payments() {
       }
     }
 
-    console.error("Error calculating:", err);
   };
   const handleFilter = async () => {
     try {
-      const token = localStorage.getItem("authToken");
-
       if (!selectedStartDate || !selectedEndDate) {
         alert("Please select both start and end dates.");
         return;
@@ -191,8 +171,7 @@ function Payments() {
         endDate: end.toISOString(),
       };
 
-      const res = await axios.get("http://localhost:5000/api/payments", {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await api.get("/payments", {
         params,
       });
 
@@ -214,8 +193,8 @@ function Payments() {
 
       setData(paymentData);
     } catch (err) {
-      console.error("Error filtering payments:", err);
-      alert("Failed to filter payments.");
+      if (isAuthHandledError(err)) return;
+      alert(err.response?.data?.message || "Failed to filter payments.");
     }
   };
 
@@ -224,45 +203,30 @@ function Payments() {
       return;
 
     try {
-      const token = localStorage.getItem("authToken");
-
-      await axios.delete(`http://localhost:5000/api/payments/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await api.delete(`/payments/${id}`);
 
       setData((prev) => prev.filter((p) => p._id !== id));
       alert("✅ Payment deleted successfully");
     } catch (err) {
-      console.error("❌ Delete failed:", err);
-      alert("Failed to delete payment");
+      if (isAuthHandledError(err)) return;
+      alert(err.response?.data?.message || "Failed to delete payment.");
     }
   };
   const handleView = async (paymentId) => {
     try {
-      const token = localStorage.getItem("authToken");
-      const res = await axios.get(
-        `http://localhost:5000/api/payments/${paymentId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await api.get(`/payments/${paymentId}`);
 
       setViewingPayment(res.data); // chứa đầy đủ dữ liệu
     } catch (err) {
-      alert("Failed to fetch payment details.");
-      console.error("❌ Error loading invoice:", err);
+      if (isAuthHandledError(err)) return;
+      alert(err.response?.data?.message || "Failed to fetch payment details.");
     }
   };
   const handleSaveCollection = async ({ paymentId, date, amount }) => {
     try {
-      const token = localStorage.getItem("authToken");
-
-      await axios.post(
-        `http://localhost:5000/api/payments/${paymentId}/collect`,
-        { date, amount },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+      await api.post(
+        `/payments/${paymentId}/collect`,
+        { date, amount }
       );
 
       alert("✅ Payment collected successfully!");
@@ -281,8 +245,8 @@ function Payments() {
         )
       );
     } catch (err) {
-      console.error("Collection failed:", err);
-      alert("❌ Failed to collect payment.");
+      if (isAuthHandledError(err)) return;
+      alert(err.response?.data?.message || "Could not confirm payment collection. Check the payment before trying again.");
     }
   };
 

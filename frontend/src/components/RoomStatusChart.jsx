@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api, { isAuthHandledError } from "../utils/apiClient.js";
 import { Pie } from "react-chartjs-2";
 import { Chart as ChartJS, ArcElement, Tooltip } from "chart.js";
 import "../styling/components/RoomStatusChart.scss";
@@ -11,19 +11,15 @@ export default function RoomStatusChart() {
   const [available, setAvailable] = useState(0);
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    if (!token) return;
-
-    axios
-      .get("http://localhost:5000/api/rooms/status-summary", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+    api
+      .get("/rooms/status-summary")
       .then((res) => {
         setOccupied(res.data.occupied);
         setAvailable(res.data.available);
       })
       .catch((err) => {
-        console.error("❌ Failed to fetch room status summary", err);
+        if (isAuthHandledError(err)) return;
+        alert(err.response?.data?.message || "Failed to fetch room status summary.");
       });
   }, []);
 

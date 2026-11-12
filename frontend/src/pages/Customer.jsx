@@ -3,8 +3,7 @@ import { FaSearch } from "react-icons/fa";
 import SidePanel from "../components/SidePanel";
 import "react-datepicker/dist/react-datepicker.css";
 import DateField from "../components/DateField";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import api, { isAuthHandledError } from "../utils/apiClient.js";
 import "../styling/customer.scss";
 
 function Customer() {
@@ -12,7 +11,6 @@ function Customer() {
   const [selectedStartDate, setSelectedStartDate] = useState(null);
   const [selectedEndDate, setSelectedEndDate] = useState(null);
   const [status, setStatus] = useState("");
-  const navigate = useNavigate();
   const fetchCustomers = async () => {
     try {
       const params = {
@@ -31,27 +29,15 @@ function Customer() {
           "-" +
           (selectedEndDate.getMonth() + 1);
       }
-      const res = await axios.get(
-        "http://localhost:5000/api/contracts/customers",
-        {
-          params,
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-          },
-        }
-      );
+      const res = await api.get("/contracts/customers", { params });
 
       setData(res.data);
     } catch (err) {
-      console.error("Failed to fetch customers", err);
+      if (isAuthHandledError(err)) return;
+      alert(err.response?.data?.message || "Failed to fetch customers.");
     }
   };
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    if (!token) {
-      alert("You must be logged in to access this page.");
-      navigate("/login");
-    }
     fetchCustomers();
   }, []);
 

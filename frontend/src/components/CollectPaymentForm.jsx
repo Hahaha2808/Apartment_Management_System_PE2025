@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "../styling/components/collectPayment.scss";
+import "../styling/components/CollectPayment.scss";
 
 function CollectPaymentForm({ payment, onClose, onSave }) {
   const today = new Date().toISOString().slice(0, 10);

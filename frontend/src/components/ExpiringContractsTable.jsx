@@ -1,21 +1,18 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api, { isAuthHandledError } from "../utils/apiClient.js";
 import "../styling/components/ExpiringContractsTable.scss";
 function ExpiringContractsTable() {
   const [expiringContracts, setExpiringContracts] = useState([]);
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    console.log("🎯 Calling /contracts/expiring with token:", token);
-    axios
-      .get("http://localhost:5000/api/contracts/expiring", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+    api
+      .get("/contracts/expiring")
       .then((res) => {
         setExpiringContracts(res.data);
       })
       .catch((err) => {
-        console.error("❌ Failed to fetch expiring contracts", err);
+        if (isAuthHandledError(err)) return;
+        alert(err.response?.data?.message || "Failed to fetch expiring contracts.");
       });
   }, []);
 

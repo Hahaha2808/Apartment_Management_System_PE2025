@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import ServiceTable from "../components/ServiceTable";
 import "../styling/service.scss";
 import SidePanel from "../components/SidePanel";
 import ServiceForm from "./ServiceForm";
-import axios from "axios";
+import api, { isAuthHandledError } from "../utils/apiClient.js";
 
 export default function Service() {
   const [services, setServices] = useState([]);
@@ -12,82 +11,63 @@ export default function Service() {
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [editingService, setEditingService] = useState(null);
 
-  const navigate = useNavigate();
-
   const fetchServices = async () => {
     try {
-      const token = localStorage.getItem("authToken");
-      const response = await axios.get("http://localhost:5000/api/services", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await api.get("/services");
       const filtered = (response.data.data || []).filter(
         (s) => s.status !== "deleted"
       );
       setServices(filtered);
     } catch (error) {
-      console.error("Error fetching services:", error);
+      if (isAuthHandledError(error)) return;
+      alert(error.response?.data?.message || "Could not fetch services.");
     }
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-
-    if (!token) {
-      const confirmed = window.confirm(
-        "You must be logged in to access this page. Do you want to log in now?"
-      );
-      if (confirmed) {
-        navigate("/login");
-      }
-      return;
-    }
-
     fetchServices();
   }, []);
 
   const handleAddService = async (data) => {
     try {
-      const token = localStorage.getItem("authToken");
-      await axios.post(
-        "http://localhost:5000/api/services/create-service",
-        { ...data, status: "active" },
-        { headers: { Authorization: `Bearer ${token}` } }
+      await api.post(
+        "/services/create-service",
+        { ...data, status: "active" }
       );
       fetchServices();
       setIsFormVisible(false);
     } catch (error) {
-      console.error("Error adding service:", error);
+      if (isAuthHandledError(error)) return;
+      alert(error.response?.data?.message || "Could not add service.");
     }
   };
 
   const handleUpdateService = async (data) => {
     try {
-      const token = localStorage.getItem("authToken");
-      await axios.put(
-        `http://localhost:5000/api/services/update-service/${editingService._id}`,
-        data,
-        { headers: { Authorization: `Bearer ${token}` } }
+      await api.put(
+        `/services/update-service/${editingService._id}`,
+        data
       );
       fetchServices();
       setIsFormVisible(false);
       setEditingService(null);
     } catch (error) {
-      console.error("Error updating service:", error);
+      if (isAuthHandledError(error)) return;
+      alert(error.response?.data?.message || "Could not update service.");
     }
   };
 
   const handleToggleStatus = async (id, currentStatus) => {
     const newStatus = currentStatus === "active" ? "inactive" : "active";
     try {
-      const token = localStorage.getItem("authToken");
-      await axios.put(
-        `http://localhost:5000/api/services/update-service/${id}`,
-        { status: newStatus },
-        { headers: { Authorization: `Bearer ${token}` } }
+      await api.put(
+        `/services/update-service/${id}`,
+        { status: newStatus }
       );
       fetchServices();
     } catch (error) {
-      console.error("Error updating service status:", error);
+      if (isAuthHandledError(error)) return;
+      alert(error.response?.data?.message || "Could not update service status.");
     }
   };
 
@@ -98,29 +78,27 @@ export default function Service() {
     if (!confirmed) return;
 
     try {
-      const token = localStorage.getItem("authToken");
-      await axios.put(
-        `http://localhost:5000/api/services/update-service/${id}`,
-        { status: "deleted" },
-        { headers: { Authorization: `Bearer ${token}` } }
+      await api.put(
+        `/services/update-service/${id}`,
+        { status: "deleted" }
       );
       fetchServices();
     } catch (error) {
-      console.error("Error deleting service:", error);
+      if (isAuthHandledError(error)) return;
+      alert(error.response?.data?.message || "Could not delete service.");
     }
   };
 
   const handleEditService = async (id) => {
     try {
-      const token = localStorage.getItem("authToken");
-      const response = await axios.get(
-        `http://localhost:5000/api/services/service/${id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+      const response = await api.get(
+        `/services/service/${id}`
       );
       setEditingService(response.data.data);
       setIsFormVisible(true);
     } catch (error) {
-      console.error("Failed to load service", error);
+      if (isAuthHandledError(error)) return;
+      alert(error.response?.data?.message || "Could not load service.");
     }
   };
 

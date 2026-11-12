@@ -1,0 +1,32 @@
+.session-notice {
+  position: fixed;
+  z-index: 10000;
+  top: 12px;
+  right: 12px;
+  max-width: min(460px, calc(100vw - 48px));
+  padding: 14px 18px;
+  border: 1px solid #b7791f;
+  border-radius: 8px;
+  background: #fff9e8;
+  color: #51360d;
+  box-shadow: 0 3px 12px #0002;
+
+  p { margin: 0 0 10px; }
+  p:last-child { margin-bottom: 0; }
+  button {
+    padding: 8px 12px;
+    border: 0;
+    border-radius: 4px;
+    background: #003b55;
+    color: white;
+    cursor: pointer;
+  }
+  button:disabled { cursor: wait; opacity: 0.6; }
+}
+
+.signin-message {
+  max-width: 330px;
+  margin: 0;
+  color: #7a3015;
+  line-height: 1.4;
+}

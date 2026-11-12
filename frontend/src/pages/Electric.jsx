@@ -4,25 +4,14 @@ import "../styling/electric.scss";
 import { FaSearch } from "react-icons/fa";
 import "react-datepicker/dist/react-datepicker.css";
 import DateField from "../components/DateField";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import api, { isAuthHandledError } from "../utils/apiClient.js";
 import { FaSave } from "react-icons/fa";
 
 function Electric() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [data, setData] = useState([]);
-  const navigate = useNavigate();
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    const token = localStorage.getItem("authToken");
-
-    if (!user || user.role !== "landlord" || !token) {
-      alert("Access denied. Only landlord can access this page.");
-      navigate("/login");
-      return;
-    }
-
     fetchCurrentMonthData();
   }, []);
 
@@ -33,7 +22,6 @@ function Electric() {
   };
 
   const handleSave = async (index) => {
-    const token = localStorage.getItem("authToken");
     const entry = data[index];
 
     if (entry.new < entry.old) {
@@ -44,33 +32,26 @@ function Electric() {
     }
 
     try {
-      await axios.post(
-        "http://localhost:5000/api/electric-meters/add-new-meters",
+      await api.post(
+        "/electric-meters/add-new-meters",
         {
           contract_id: entry.contract_id,
           currentIndex: entry.new,
           recordDate: new Date().toISOString(),
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
       alert("\uD83D\uDCBE Saved successfully!");
       fetchCurrentMonthData();
     } catch (err) {
-      console.error("Failed to save electric reading", err);
-      alert("Save failed.");
+      if (isAuthHandledError(err)) return;
+      alert(err.response?.data?.message || "Save failed.");
     }
   };
 
   const fetchCurrentMonthData = () => {
-    const token = localStorage.getItem("authToken");
-
-    axios
-      .get("http://localhost:5000/api/electric-meters/index", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+    api
+      .get("/electric-meters/index")
       .then((res) => {
         console.log("API electric-meters/index response:", res.data);
         if (!Array.isArray(res.data)) {
@@ -89,7 +70,8 @@ function Electric() {
         setData(transformed);
       })
       .catch((err) => {
-        console.error("Error fetching electric data", err);
+        if (isAuthHandledError(err)) return;
+        alert(err.response?.data?.message || "Failed to fetch electric readings.");
       });
   };
 
@@ -100,7 +82,6 @@ function Electric() {
     : true;
 
   const handleFilter = () => {
-    const token = localStorage.getItem("authToken");
     if (!selectedDate) {
       alert("Please select a date to filter.");
       return;
@@ -118,14 +99,11 @@ function Electric() {
       return;
     }
 
-    axios
+    api
       .get(
-        `http://localhost:5000/api/electric-meters/history?month=${
+        `/electric-meters/history?month=${
           month + 1
-        }&year=${year}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        }&year=${year}`
       )
       .then((res) => {
         const filteredData = res.data.map((item) => {
@@ -142,8 +120,8 @@ function Electric() {
         setData(filteredData);
       })
       .catch((err) => {
-        console.error("Error fetching electric meter history:", err);
-        alert("Failed to load history.");
+        if (isAuthHandledError(err)) return;
+        alert(err.response?.data?.message || "Failed to load history.");
       });
   };
 

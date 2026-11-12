@@ -1,10 +1,14 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { signIn } from "../utils/authSession.js";
+import { isAuthHandledError } from "../utils/apiClient.js";
 import "../styling/components/signin.scss";
 
 function SignIn() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [pending, setPending] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const [account, setAccount] = useState({
     email: "",
@@ -18,36 +22,25 @@ function SignIn() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    if (pending) return;
+    setPending(true);
+    setErrorMessage("");
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/users/signin",
-        account
-      );
-
-      if (response.status === 200) {
-        const { accessToken, user } = response.data;
-
-        localStorage.setItem("authToken", accessToken);
-        localStorage.setItem("user", JSON.stringify(user));
-
-        alert("Login successful");
-
-        if (user.role === "admin") {
-          navigate("/admin");
-        } else if (user.role === "landlord") {
-          navigate("/dashboard");
-        } else {
-          navigate("/");
-        }
+      const { user } = await signIn(account);
+      alert("Login successful");
+      if (user.role === "admin") {
+        navigate("/admin");
+      } else if (user.role === "landlord") {
+        navigate("/dashboard");
+      } else {
+        navigate("/");
       }
     } catch (error) {
-      console.error("Login error:", error);
-      alert(
-        "Login failed: " +
-          (error.response?.data?.message ||
-            "Server error or invalid credentials")
-      );
+      if (!isAuthHandledError(error)) {
+        setErrorMessage(error.response?.data?.message || error.message || "Server error or invalid credentials");
+      }
+    } finally {
+      setPending(false);
     }
   };
 
@@ -64,6 +57,10 @@ function SignIn() {
       <div className="signin-container">
         <form className="signin-inner" onSubmit={handleSubmit}>
           <span className="title">Log in</span>
+          {location.state?.sessionNotice === "session-ended" && (
+            <p className="signin-message" role="status">Your session has ended. Please log in again.</p>
+          )}
+          {errorMessage && <p className="signin-message" role="alert">{errorMessage}</p>}
           <div className="fields-container">
             <input
               type="email"
@@ -81,20 +78,12 @@ function SignIn() {
               required
               placeholder="Password*"
             />
-            <div className="remember-container">
-              <input
-                type="checkbox"
-                id="remember"
-                name="remember"
-                value="remember"
-              />
-              <label htmlFor="remember">Remember</label>
-            </div>
+            <p>Sessions expire 24 hours after login.</p>
           </div>
           <div className="divider"></div>
           <div className="submit-container">
-            <button type="submit" className="submit-button">
-              Login
+            <button type="submit" className="submit-button" disabled={pending}>
+              {pending ? "Logging in…" : "Login"}
             </button>
             <span className="redirect-link" onClick={handleRedirectToRegister}>
               Create an account

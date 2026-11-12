@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { getUser, logout } from "../utils/authSession.js";
+import { isAuthHandledError } from "../utils/apiClient.js";
 import { Link } from "react-router";
 import "../styling/components/sidePanel.scss";
 import {
@@ -16,17 +15,19 @@ import {
 } from "react-icons/io5";
 
 function SidePanel({ selected }) {
-  const navigate = useNavigate();
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = getUser();
   const username = user?.username || "user";
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     const confirmed = window.confirm("Do you want to log out?");
     if (!confirmed) return;
 
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("user");
-    navigate("/");
+    try {
+      await logout();
+    } catch (error) {
+      // The root session notice survives this panel unmounting after local logout.
+      if (!isAuthHandledError(error)) alert("Server logout could not be confirmed. Please retry logout.");
+    }
   };
 
   return (

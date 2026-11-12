@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "../styling/components/AddRoomForm.scss";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import api, { isAuthHandledError } from "../utils/apiClient.js";
 
 const EditRoomForm = ({ roomData, onSuccess }) => {
   const { id } = useParams();
@@ -37,24 +37,15 @@ const EditRoomForm = ({ roomData, onSuccess }) => {
       updatedData.append(key, preparedData[key]);
     }
     try {
-      const token = localStorage.getItem("authToken");
-      await axios.put(
-        `http://localhost:5000/api/rooms/${formData._id}`,
-        updatedData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      await api.put(
+        `/rooms/${formData._id}`,
+        updatedData
       );
       alert("Room updated successfully!");
       onSuccess();
     } catch (err) {
-      console.error(
-        "❌ Error updating room:",
-        err.response?.data || err.message
-      );
-      alert("Update failed!");
+      if (isAuthHandledError(err)) return;
+      alert(err.response?.data?.message || "Update failed!");
     }
   };
   return (

@@ -2,7 +2,7 @@ import React from "react";
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import axios from "axios";
+import { authApi } from "../utils/apiClient.js";
 import "../styling/components/signup.scss";
 function SignUp() {
   const navigate = useNavigate();
@@ -58,20 +58,17 @@ function SignUp() {
 
     // Data to send
     const formData = { fullname, username, email, password, phone_number };
-    console.log("Sending data:", formData);
 
-    axios
-      .post("http://localhost:5000/api/users/register", formData)
+    authApi
+      .post("/users/register", formData)
       .then((response) => {
-        console.log(response.data);
-        if (response.status === 200) {
+        if (response.status === 201) {
           alert("Registration successful");
           navigate("/login");
         }
       })
       .catch((error) => {
-        console.error("There was an error!", error);
-        alert("Registration failed");
+        alert(error.response?.data?.message || "Registration failed. Please check your connection and try again.");
       });
   };
   const handleRedirectToLogin = () => {
