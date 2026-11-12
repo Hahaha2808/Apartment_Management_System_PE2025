@@ -3,25 +3,14 @@ import SidePanel from "../components/SidePanel";
 import "../styling/water.scss";
 import "react-datepicker/dist/react-datepicker.css";
 import DateField from "../components/DateField";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import api, { isAuthHandledError } from "../utils/apiClient.js";
 import { FaSave, FaSearch } from "react-icons/fa";
 
 function Water() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [data, setData] = useState([]);
-  const navigate = useNavigate();
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    const token = localStorage.getItem("authToken");
-
-    if (!user || user.role !== "landlord" || !token) {
-      alert("Access denied. Only landlord can access this page.");
-      navigate("/login");
-      return;
-    }
-
     fetchCurrentMonthData();
   }, []);
 
@@ -32,7 +21,6 @@ function Water() {
   };
 
   const handleSave = async (index) => {
-    const token = localStorage.getItem("authToken");
     const entry = data[index];
 
     if (entry.new < entry.old) {
@@ -43,15 +31,12 @@ function Water() {
     }
 
     try {
-      await axios.post(
-        "http://localhost:5000/api/water-meters/add-new-meters",
+      await api.post(
+        "/water-meters/add-new-meters",
         {
           contract_id: entry.contract_id,
           currentIndex: entry.new,
           recordDate: new Date().toISOString(),
-        },
-        {
-          headers: { Authorization: `Bearer ${token}` },
         }
       );
 
@@ -59,18 +44,14 @@ function Water() {
 
       fetchCurrentMonthData();
     } catch (err) {
-      console.error("❌ Failed to save water reading", err);
-      alert("Save failed.");
+      if (isAuthHandledError(err)) return;
+      alert(err.response?.data?.message || "Save failed.");
     }
   };
 
   const fetchCurrentMonthData = () => {
-    const token = localStorage.getItem("authToken");
-
-    axios
-      .get("http://localhost:5000/api/water-meters/index", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+    api
+      .get("/water-meters/index")
       .then((res) => {
         console.log("📦 API water-meters/index response:", res.data);
         if (!Array.isArray(res.data)) {
@@ -89,7 +70,8 @@ function Water() {
         setData(transformed);
       })
       .catch((err) => {
-        console.error("Error fetching water data", err);
+        if (isAuthHandledError(err)) return;
+        alert(err.response?.data?.message || "Failed to fetch water readings.");
       });
   };
 
@@ -100,7 +82,6 @@ function Water() {
     : true;
 
   const handleFilter = () => {
-    const token = localStorage.getItem("authToken");
     if (!selectedDate) {
       alert("Please select a date to filter.");
       return;
@@ -109,12 +90,9 @@ function Water() {
     const month = selectedDate.getMonth() + 1;
     const year = selectedDate.getFullYear();
 
-    axios
+    api
       .get(
-        `http://localhost:5000/api/water-meters/history?month=${month}&year=${year}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
+        `/water-meters/history?month=${month}&year=${year}`
       )
       .then((res) => {
         const filteredData = res.data.map((item) => ({
@@ -127,8 +105,8 @@ function Water() {
         setData(filteredData);
       })
       .catch((err) => {
-        console.error("Error fetching water meter history:", err);
-        alert("❌ Failed to load history.");
+        if (isAuthHandledError(err)) return;
+        alert(err.response?.data?.message || "Failed to load history.");
       });
   };
 

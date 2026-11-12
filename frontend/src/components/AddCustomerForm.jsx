@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import "../styling/components/AddCustomerForm.scss";
 import SelectableServiceTable from "./SelectServiceTable";
 import SidePanel from "../components/SidePanel";
-import axios from "axios";
+import api, { isAuthHandledError } from "../utils/apiClient.js";
 import { differenceInYears, addMonths, isBefore } from "date-fns";
 
 const AddCustomerForm = () => {
@@ -118,17 +118,9 @@ const AddCustomerForm = () => {
     e.preventDefault();
     if (!validateTenant()) return;
     try {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        alert("You are not logged in or token missing!");
-        navigate("/login");
-        return;
-      }
-
-      const response = await axios.post(
-        "http://localhost:5000/api/tenant/add",
-        formData,
-        { headers: { Authorization: `Bearer ${token}` } }
+      const response = await api.post(
+        "/tenant/add",
+        formData
       );
       if (response.data.success) {
         alert("Tenant added successfully!");
@@ -138,6 +130,7 @@ const AddCustomerForm = () => {
         alert("Save failed: " + response.data.message);
       }
     } catch (err) {
+      if (isAuthHandledError(err)) return;
       alert("Error: " + (err.response?.data?.message || "Unknown error"));
     }
   };
@@ -148,17 +141,15 @@ const AddCustomerForm = () => {
     try {
       console.log("🌟 Sending serviceIds:", selectedServiceIds);
 
-      const token = localStorage.getItem("authToken");
-      const response = await axios.post(
-        "http://localhost:5000/api/contracts/add",
+      const response = await api.post(
+        "/contracts/add",
         {
           roomId,
           tenantId,
           ...contractData,
           serviceIds: selectedServiceIds,
           status: "active",
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
+        }
       );
 
       console.log("✅ Create contract response:", response.data);
@@ -170,7 +161,8 @@ const AddCustomerForm = () => {
         alert("Failed to save contract.");
       }
     } catch (err) {
-      alert("Error saving contract.");
+      if (isAuthHandledError(err)) return;
+      alert(err.response?.data?.message || "Error saving contract.");
     }
   };
 
@@ -181,16 +173,12 @@ const AddCustomerForm = () => {
   useEffect(() => {
     const loadActiveServices = async () => {
       try {
-        const token = localStorage.getItem("authToken");
-        if (!token) return;
-
-        const { data } = await axios.get("http://localhost:5000/api/services", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const { data } = await api.get("/services");
 
         setServices((data.data || []).filter((s) => s.status === "active"));
       } catch (err) {
-        console.error("Error loading active services:", err);
+        if (isAuthHandledError(err)) return;
+        alert(err.response?.data?.message || "Error loading active services.");
       }
     };
 
@@ -199,19 +187,11 @@ const AddCustomerForm = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        alert("You are not logged in or token missing!");
-        navigate("/login");
-        return;
-      }
-
       if (contractId) {
         setServiceReadOnly(true);
 
-        const { data: contract } = await axios.get(
-          `http://localhost:5000/api/contracts/${contractId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
+        const { data: contract } = await api.get(
+          `/contracts/${contractId}`
         );
 
         // 📌 Fill contractData
@@ -252,10 +232,7 @@ const AddCustomerForm = () => {
         );
       } else if (roomId) {
         setServiceReadOnly(false);
-        const serviceRes = await axios.get(
-          `http://localhost:5000/api/services`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const serviceRes = await api.get("/services");
         const activeServices = serviceRes.data.data?.filter(
           (s) => s.status === "active"
         );
@@ -263,17 +240,19 @@ const AddCustomerForm = () => {
         setSelectedServiceIds([]);
 
         // Load room price
-        const { data: room } = await axios.get(
-          `http://localhost:5000/api/rooms/${roomId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const { data: room } = await api.get(`/rooms/${roomId}`);
         if (room.price) {
           setContractData((prev) => ({ ...prev, monthlyFee: room.price }));
         }
       }
     };
 
-    if (roomId) loadData();
+    if (roomId) {
+      loadData().catch((err) => {
+        if (isAuthHandledError(err)) return;
+        alert(err.response?.data?.message || "Could not load contract or room details.");
+      });
+    }
   }, [roomId, contractId]);
 
   const handleEndContract = async () => {
@@ -283,20 +262,9 @@ const AddCustomerForm = () => {
     if (!confirm) return;
 
     try {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        alert("You are not logged in or token missing!");
-        navigate("/login");
-        return;
-      }
-      const res = await axios.put(
-        `http://localhost:5000/api/contracts/${contractId}`,
-        { status: "terminated" },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const res = await api.put(
+        `/contracts/${contractId}`,
+        { status: "terminated" }
       );
 
       if (res.data.contract.status === "terminated") {
@@ -304,25 +272,18 @@ const AddCustomerForm = () => {
         navigate("/rooms");
       }
     } catch (err) {
-      console.error("❌ Error ending contract:", err);
-      alert("Error ending contract.");
+      if (isAuthHandledError(err)) return;
+      alert(err.response?.data?.message || "Error ending contract.");
     }
   };
   const handleUpdateTenant = async () => {
     try {
-      const token = localStorage.getItem("authToken");
-      if (!token || !contractId) {
-        alert("You are not logged in or token missing!");
-        navigate("/login");
+      if (!contractId) {
+        alert("Contract ID is missing.");
         return;
       }
 
-      const res = await axios.get(
-        `http://localhost:5000/api/contracts/${contractId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await api.get(`/contracts/${contractId}`);
 
       const tenantId = res.data.tenantId?._id;
       if (!tenantId) {
@@ -330,22 +291,17 @@ const AddCustomerForm = () => {
         return;
       }
 
-      const updateRes = await axios.put(
-        `http://localhost:5000/api/tenant/${tenantId}`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const updateRes = await api.put(
+        `/tenant/${tenantId}`,
+        formData
       );
 
       if (updateRes.status === 200) {
         alert("Tenant information updated successfully.");
       }
     } catch (err) {
-      console.error("❌ Error updating tenant:", err);
-      alert("Failed to update tenant.");
+      if (isAuthHandledError(err)) return;
+      alert(err.response?.data?.message || "Failed to update tenant.");
     }
   };
   return (

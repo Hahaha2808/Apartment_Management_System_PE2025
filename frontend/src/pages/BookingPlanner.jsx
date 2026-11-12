@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api, { isAuthHandledError } from "../utils/apiClient.js";
 import SidePanel from "../components/SidePanel";
 import "../styling/bookingPlanner.scss";
 
@@ -35,19 +35,15 @@ function BookingPlanner() {
       return;
     }
 
-    const token = localStorage.getItem("authToken");
-    if (!token) return;
-
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/rooms/available", {
-        headers: { Authorization: `Bearer ${token}` },
+      const res = await api.get("/rooms/available", {
         params: { startDate, endDate },
       });
       setAvailableRooms(res.data);
     } catch (err) {
-      console.error("Failed to fetch available rooms", err);
-      alert("Something went wrong while fetching rooms.");
+      if (isAuthHandledError(err)) return;
+      alert(err.response?.data?.message || "Something went wrong while fetching rooms.");
     } finally {
       setLoading(false);
     }

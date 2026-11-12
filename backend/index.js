@@ -11,14 +11,18 @@ import waterRoutes from "./routes/waterMeterRoutes.js";
 import electricRoutes from "./routes/electricMeterRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import { startContractExpirationJob } from "./cronJobs/contractExpirationJob.js";
+import RefreshSession from "./models/RefreshSession.model.js";
+import { getAppOrigin } from "./middleware/sessionSecurity.js";
 
 dotenv.config();
-connectDB();
+const appOrigin = getAppOrigin();
+await connectDB();
+await RefreshSession.init();
 
 const app = express();
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: appOrigin,
     credentials: true,
   })
 );

@@ -7,7 +7,7 @@ import AddRoomForm from "../components/AddRoomForm";
 import EditRoomForm from "../components/EditRoomForm";
 import "../styling/components/AddRoomForm.scss";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api, { isAuthHandledError } from "../utils/apiClient.js";
 
 const Room = () => {
   const [roomStatus, setRoomStatus] = useState("");
@@ -29,20 +29,8 @@ const Room = () => {
   const [editingRoom, setEditingRoom] = useState(null);
 
   const fetchRooms = () => {
-    const token = localStorage.getItem("authToken");
-
-    if (!token) {
-      console.error("No token found in localStorage");
-      return;
-    }
-
-    console.log("Token frontend:", token); // Debug token
-    axios
-      .get("http://localhost:5000/api/rooms", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
+    api
+      .get("/rooms")
 
       .then((res) => {
         const activeRooms = res.data.filter(
@@ -52,19 +40,13 @@ const Room = () => {
         setOriginalRooms(activeRooms);
       })
       .catch((err) => {
-        console.error("Error when fetch room!", err);
-        alert(" Could not fetch room data!");
+        if (isAuthHandledError(err)) return;
+        alert(err.response?.data?.message || "Could not fetch room data!");
       });
   };
 
   useEffect(() => {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user || user.role !== "landlord") {
-      alert("Access denied. Only landlord can access this page.");
-      navigate("/login");
-    } else {
-      fetchRooms();
-    }
+    fetchRooms();
   }, []);
 
   const handleRoomStatusChange = (e) => {
@@ -74,8 +56,6 @@ const Room = () => {
     setFeeStatus(e.target.value);
   };
   const filterRooms = async () => {
-    const token = localStorage.getItem("authToken");
-
     try {
       const queryParams = new URLSearchParams();
 
@@ -86,19 +66,14 @@ const Room = () => {
       if (numberBedroom) queryParams.append("numberBedroom", numberBedroom);
       if (address) queryParams.append("address", address);
 
-      const response = await axios.get(
-        `http://localhost:5000/api/rooms?${queryParams.toString()}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      const response = await api.get(
+        `/rooms?${queryParams.toString()}`
       );
 
       setRooms(response.data);
     } catch (err) {
-      console.error("Error filtering rooms:", err);
-      alert("Could not filter rooms.");
+      if (isAuthHandledError(err)) return;
+      alert(err.response?.data?.message || "Could not filter rooms.");
     }
   };
 
@@ -121,42 +96,30 @@ const Room = () => {
       return;
     }
     try {
-      const token = localStorage.getItem("authToken");
-      await axios.patch(
-        `http://localhost:5000/api/rooms/${roomId}/status`,
-        { status: "disabled" },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      await api.patch(
+        `/rooms/${roomId}/status`,
+        { status: "disabled" }
       );
 
       setRooms((prevRooms) => prevRooms.filter((room) => room._id !== roomId));
 
       alert("Room has been archived successfully!");
     } catch (error) {
-      console.error("Error when updating room status", error);
-      alert("There was an error disabling the room.");
+      if (isAuthHandledError(error)) return;
+      alert(error.response?.data?.message || "There was an error disabling the room.");
     }
   };
   const handleRestoreRoom = async (roomId) => {
     try {
-      const token = localStorage.getItem("authToken");
-      await axios.patch(
-        `http://localhost:5000/api/rooms/${roomId}/status`,
-        { status: "available" },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      await api.patch(
+        `/rooms/${roomId}/status`,
+        { status: "available" }
       );
       alert("Room has been restored.");
       fetchRooms(); // refresh list
     } catch (err) {
-      console.error("Error restoring room:", err);
-      alert("Could not restore room.");
+      if (isAuthHandledError(err)) return;
+      alert(err.response?.data?.message || "Could not restore room.");
     }
   };
 
@@ -241,7 +204,7 @@ const Room = () => {
                 <div className="room-image">
                   {room.image ? (
                     <img
-                      src={`http://localhost:5000/uploads/${room.image}`}
+                      src={`/uploads/${room.image}`}
                       alt={`Room ${room.roomNumber}`}
                     />
                   ) : (

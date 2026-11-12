@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import "../styling/components/AddRoomForm.scss";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import api, { isAuthHandledError } from "../utils/apiClient.js";
 
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -9,7 +8,6 @@ import { roomSchema } from "../../validations/roomSchema";
 
 const AddRoomForm = ({ onSuccess }) => {
   const [image, setImage] = useState(null);
-  const navigate = useNavigate();
 
   const {
     register,
@@ -41,23 +39,15 @@ const AddRoomForm = ({ onSuccess }) => {
     if (image) form.append("image", image);
 
     try {
-      const token = localStorage.getItem("authToken");
-      if (!token) {
-        alert("You are not logged in or token missing!");
-        navigate("/login");
-        return;
-      }
-
-      const res = await axios.post("http://localhost:5000/api/rooms", form, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.post("/rooms", form);
 
       console.log("Add room successfully", res.data);
       reset();
       onSuccess?.();
     } catch (err) {
+      if (isAuthHandledError(err)) return;
       const errorMessage =
-        err.response?.data?.error || "Unexpected error when adding room.";
+        err.response?.data?.message || err.response?.data?.error || "Unexpected error when adding room.";
 
       alert(errorMessage);
     }
